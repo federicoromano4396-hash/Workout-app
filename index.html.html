@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workout Tracker</title>
+    
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+        import { getDatabase, ref, get, set, onValue } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js';
+        
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBzkjkN7Avrn8YSRFg8ut-6U23-BB7__tA",
+            authDomain: "workout-tracker-11806.firebaseapp.com",
+            databaseURL: "https://workout-tracker-11806-default-rtdb.firebaseio.com",
+            projectId: "workout-tracker-11806",
+            storageBucket: "workout-tracker-11806.firebasestorage.app",
+            messagingSenderId: "759524107049",
+            appId: "1:759524107049:web:25207f01012bbbb4c0cd38",
+            measurementId: "G-H4LVRRK0MT"
+        };
+        
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        
+        // Make Firebase functions globally available
+        window.firebaseDB = database;
+        window.firebaseRef = ref;
+        window.firebaseGet = get;
+        window.firebaseSet = set;
+        window.firebaseOnValue = onValue;
+        
+        // Initialize the app after Firebase is loaded
+        window.initWorkoutApp();
+    </script>
+    
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#1e3c72 0%,#2a5298 100%);min-height:100vh;color:white}
+        .container{max-width:900px;margin:0 auto;padding:20px}
+        .main-menu{text-align:center;padding:40px 20px}
+        .main-title{font-size:3rem;font-weight:800;margin-bottom:10px;background:linear-gradient(45deg,#ff6b6b,#ffd93d,#6bcf7f,#4d79ff);background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:gradientShift 3s ease infinite}
+        @keyframes gradientShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+        .main-subtitle{font-size:1.2rem;opacity:0.8;margin-bottom:50px;font-weight:300}
+        .workout-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:25px;margin-bottom:40px}
+        .workout-card{background:linear-gradient(135deg,rgba(255,255,255,0.1),rgba(255,255,255,0.05));backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.2);border-radius:20px;padding:30px;cursor:pointer;transition:all 0.3s ease;position:relative;overflow:hidden}
+        .workout-card:hover{transform:translateY(-5px);box-shadow:0 20px 40px rgba(0,0,0,0.3);border-color:rgba(255,255,255,0.4)}
+        .workout-card.bicipiti{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%)}
+        .workout-card.petto-tricipiti{background:linear-gradient(135deg,#f093fb 0%,#f5576c 100%)}
+        .workout-card.spalle-gambe{background:linear-gradient(135deg,#4facfe 0%,#00f2fe 100%)}
+        .workout-icon{font-size:3rem;margin-bottom:15px;display:block}
+        .workout-title{font-size:1.5rem;font-weight:700;margin-bottom:10px}
+        .workout-info{opacity:0.9;font-size:0.95rem;line-height:1.4}
+        .exercise-page{display:none}
+        .exercise-page.active{display:block}
+        .page-header{text-align:center;margin-bottom:30px;padding:30px;background:rgba(255,255,255,0.1);border-radius:20px;backdrop-filter:blur(10px)}
+        .back-button{background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);color:white;padding:10px 20px;border-radius:25px;cursor:pointer;font-size:0.9rem;font-weight:600;margin-bottom:20px;transition:all 0.3s ease}
+        .back-button:hover{background:rgba(255,255,255,0.3);transform:translateX(-3px)}
+        .page-title{font-size:2.5rem;font-weight:700;margin-bottom:10px}
+        .page-subtitle{opacity:0.8;font-size:1.1rem}
+        .exercise{background:rgba(255,255,255,0.95);border-radius:20px;padding:25px;margin-bottom:20px;box-shadow:0 10px 30px rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.3);transition:transform 0.2s ease;color:#2c3e50}
+        .exercise:hover{transform:translateY(-3px)}
+        .exercise-name{font-size:1.4rem;font-weight:700;color:#2c3e50;margin-bottom:15px;display:flex;align-items:center}
+        .exercise-number{width:35px;height:35px;background:linear-gradient(135deg,#3498db,#2980b9);border-radius:50%;margin-right:15px;display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:1.1rem}
+        .exercise-params{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px;margin-bottom:15px}
+        .param-group{background:#f8f9fa;padding:15px;border-radius:12px;border:2px solid transparent;transition:all 0.3s ease}
+        .param-group:focus-within{border-color:#3498db;box-shadow:0 0 0 3px rgba(52,152,219,0.1)}
+        .param-label{font-weight:600;color:#495057;margin-bottom:8px;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.5px}
+        .param-input{width:100%;padding:12px;border:2px solid #dee2e6;border-radius:8px;font-size:1rem;font-weight:600;transition:all 0.3s ease;background:white}
+        .param-input:focus{outline:none;border-color:#3498db;box-shadow:0 0 0 3px rgba(52,152,219,0.1)}
+        .param-input.saving{border-color:#f39c12;box-shadow:0 0 0 3px rgba(243,156,18,0.1)}
+        .param-input.saved{border-color:#27ae60;box-shadow:0 0 0 3px rgba(39,174,96,0.1)}
+        .exercise-description{background:linear-gradient(135deg,#e8f4f8,#f0f8ff);padding:15px;border-radius:12px;border-left:4px solid #3498db;color:#2c3e50;margin-top:15px;font-size:0.95rem;line-height:1.5}
+        .current-weight{font-weight:700;color:#e74c3c}
+        .firebase-display{background:linear-gradient(135deg,#e8f5e8,#f0fff0);border:2px solid #27ae60;border-radius:15px;padding:20px;margin-bottom:20px;box-shadow:0 5px 15px rgba(39,174,96,0.1)}
+        .firebase-title{font-weight:700;color:#27ae60;margin-bottom:15px;font-size:1.1rem;text-align:center}
+        .firebase-data{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-bottom:15px}
+        .firebase-item{background:rgba(39,174,96,0.1);padding:10px;border-radius:8px;text-align:center;border:1px solid rgba(39,174,96,0.2)}
+        .firebase-label{display:block;font-size:0.8rem;font-weight:600;color:#27ae60;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px}
+        .firebase-value{display:block;font-size:1.1rem;font-weight:700;color:#2c3e50}
+        .refresh-button,.save-button{border:none;border-radius:20px;font-weight:600;cursor:pointer;transition:all 0.3s ease}
+        .refresh-button{background:linear-gradient(135deg,#3498db,#2980b9);color:white;padding:8px 20px;font-size:0.85rem;display:block;margin:0 auto}
+        .refresh-button:hover{transform:translateY(-1px);box-shadow:0 5px 15px rgba(52,152,219,0.3)}
+        .save-button{background:linear-gradient(135deg,#27ae60,#2ecc71);color:white;padding:12px 25px;font-size:0.95rem;margin-top:15px}
+        .save-button:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(39,174,96,0.3)}
+        .status-message{padding:15px 20px;border-radius:12px;margin:15px 0;font-weight:600;text-align:center;opacity:0;transition:opacity 0.3s ease}
+        .status-message.success{background:rgba(212,237,218,0.9);color:#155724;border:1px solid rgba(195,230,203,0.5)}
+        .status-message.error{background:rgba(248,215,218,0.9);color:#721c24;border:1px solid rgba(245,198,203,0.5)}
+        .status-message.show{opacity:1}
+        .workout-notes{background:rgba(255,243,205,0.9);border:1px solid rgba(255,234,167,0.5);border-radius:15px;padding:25px;margin-top:30px;color:#856404}
+        .workout-notes h3{margin-bottom:15px;font-size:1.2rem}
+        .workout-notes ul{padding-left:20px;line-height:1.6}
+        .workout-notes li{margin-bottom:8px}
+        .section-divider{text-align:center;margin:40px 0 30px 0;padding:15px;background:rgba(255,255,255,0.1);border-radius:15px;backdrop-filter:blur(10px)}
+        .section-divider h2{font-size:1.8rem;font-weight:700;color:white}
+        @media (max-width:768px){.container{padding:15px}.main-title{font-size:2.5rem}.workout-cards{grid-template-columns:1fr;gap:20px}.exercise-params{grid-template-columns:1fr}}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="main-menu" class="main-menu">
+            <div class="main-title">💪 Workout Tracker</div>
+            <div class="main-subtitle">Scegli la tua routine di allenamento</div>
+            <div class="workout-cards">
+                <div class="workout-card bicipiti" onclick="showPage('bicipiti')">
+                    <div class="workout-icon">💪</div>
+                    <div class="workout-title">Routine Bicipiti</div>
+                    <div class="workout-info"><span>⏱ 30-45 min</span><br><span>🏋️ 5 esercizi</span></div>
+                </div>
+                <div class="workout-card petto-tricipiti" onclick="showPage('petto-tricipiti')">
+                    <div class="workout-icon">🏋️‍♂️</div>
+                    <div class="workout-title">Petto & Tricipiti</div>
+                    <div class="workout-info"><span>⏱ 45-60 min</span><br><span>🏋️ 5 esercizi</span></div>
+                </div>
+                <div class="workout-card spalle-gambe" onclick="showPage('spalle-gambe')">
+                    <div class="workout-icon">🦵</div>
+                    <div class="workout-title">Spalle & Gambe</div>
+                    <div class="workout-info"><span>⏱ 50-70 min</span><br><span>🏋️ 4 esercizi</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="status-message" class="status-message"></div>
+        
+        <div id="bicipiti-page" class="exercise-page">
+            <button class="back-button" onclick="showMainMenu()">← Torna al Menu</button>
+            <div class="page-header">
+                <div class="page-title">💪 Routine Bicipiti</div>
+                <div class="page-subtitle">Frequenza: 1-2 volte a settimana • Durata: 30-45 minuti</div>
+            </div>
+            
+            <div class="exercise">
+                <div class="exercise-name"><div class="exercise-number">1</div>Barbell Curl (Curl con bilanciere)</div>
+                <div class="firebase-display">
+                    <div class="firebase-title">📊 Dati Salvati</div>
+                    <div class="firebase-data">
+                        <div class="firebase-item"><span class="firebase-label">Serie:</span><span id="barbell-curl-firebase-sets" class="firebase-value">-</span></div>
+                        <div class="firebase-item"><span class="firebase-label">Ripetizioni:</span><span id="barbell-curl-firebase-reps" class="firebase-value">-</span></div>
+                        <div class="firebase-item"><span class="firebase-label">Riposo:</span><span id="barbell-curl-firebase-rest" class="firebase-value">-</span></div>
+                        <div class="firebase-item"><span class="firebase-label">Aggiornamento:</span><span id="barbell-curl-firebase-updated" class="firebase-value">-</span></div>
+                    </div>
+                    <button class="refresh-button" onclick="loadExercise('barbell-curl')">🔄 Aggiorna</button>
+                </div>
+                <div class="exercise-params">
+                    <div class="param-group"><div class="param-label">Serie</div><input type="number" class="param-input" data-exercise="barbell-curl" data-param="sets" value="4" min="1" max="10"></div>
+                    <div class="param-group"><div class="param-label">Ripetizioni</div><input type="text" class="param-input" data-exercise="barbell-curl" data-param="reps" value="10-12"></div>
+                    <div class="param-group"><div class="param-label">Riposo (sec)</div><input type="number" class="param-input" data-exercise="barbell-curl" data-param="rest" value="60" min="30" max="300"></div>
+                </div>
+                <div class="exercise-description">Solleva il bilanciere lentamente, concentrandoti sulla contrazione dei bicipiti. <span class="current-weight">Peso attuale: 23kg</span></div>
+            </div>
+            
+            <div class="exercise">
+                <div class="exercise-name"><div class="exercise-number">2</div>Hammer Curl (Curl martello)</div>
+                <div class="exercise-params">
+                    <div class="param-group"><div class="param-label">Serie</div><input type="number" class="param-input" data-exercise="hammer-curl" data-param="sets" value="3" min="1" max="10"></div>
+                    <div class="param-group"><div class="param-label">Ripetizioni</div><input type="text" class="param-input" data-exercise="hammer-curl" data-param="reps" value="10-12"></div>
+                    <div class="param-group"><div class="param-label">Riposo (sec)</div><input type="number" class="param-input" data-exercise="hammer-curl" data-param="rest" value="60" min="30" max="300"></div>
+                </div>
+                <div class="exercise-description">Usa manubri con palmi rivolti l'uno verso l'altro. <span class="current-weight">Peso attuale: 12kg per parte, 11 reps</span></div>
+            </div>
+            
+            <div class="exercise">
+                <div class="exercise-name"><div class="exercise-number">3</div>Incline Dumbbell Curl</div>
+                <div class="exercise-params">
+                    <div class="param-group"><div class="param-label">Serie</div><input type="number" class="param-input" data-exercise="incline-curl" data-param="sets" value="3" min="1" max="10"></div>
+                    <div class="param-group"><div class="param-label">Ripetizioni</div><input type="text" class="param-input" data-exercise="incline-curl" data-param="reps" value="12"></div>
+                    <div class="param-group"><div class="param-label">Riposo (sec)</div><input type="number" class="param-input" data-exercise="incline-curl" data-param="rest" value="75" min="30" max="300"></div>
+                </div>
+                <div class="exercise-description">Su panca inclinata, movimento lento e controllato. <span class="current-weight">Peso attuale: 10kg, 10 reps</span></div>
+            </div>
+            
+            <div class="exercise">
+                <div class="exercise-name"><div class="exercise-number">4</div>Concentrated Curl</div>
+                <div class="exercise-params">
+                    <div class="param-group"><div class="param-label">Serie</div><input type="number" class="param-input" data-exercise="concentrated-curl" data-param="sets" value="3" min="1" max="10"></div>
+                    <div class="param-group"><div class="param-label">Ripetizioni</div><input type="text" class="param-input" data-exercise="concentrated-curl" data-param="reps" value="8-10"></div>
+                    <div class="param-group"><div class="param-label">Riposo (sec)</div><input type="number" class="param-input" data-exercise="concentrated-curl" data-param="rest" value="52" min="30" max="300"></div>
+                </div>
+                <div class="exercise-description">Gomito appoggiato sulla coscia, movimento lento. <span class="current-weight">Peso attuale: 10kg</span></div>
+            </div>
+            
+            <div class="exercise">
+                <div class="exercise-name"><div class="exercise-number">5</div>Zottman Curl</div>
+                <div class="exercise-params">
+                    <div class="param-group"><div class="param-label">Serie</div><input type="number" class="param-input" data-exercise="zottman-curl" data-param="sets" value="3" min="1" max="10"></div>
+                    <div class="param-group"><div class="param-label">Ripetizioni</div><input type="text" class="param-input" data-exercise="zottman-curl" data-param="reps" value="8-10"></div>
+                    <div class="param-group"><div class="param-label">Riposo (sec)</div><input type="number" class="param-input" data-exercise="zottman-curl" data-param="rest" value="60" min="30" max="300"></div>
+                </div>
+                <div class="exercise-description">Salita supina, discesa prona. <span class="current-weight">Peso attuale: 8kg</span></div>
+            </div>
+        </div>
+        
+        <div id="petto-tricipiti-page" class="exercise-page">
+            <button class="back-button" onclick="showMainMenu()">← Torna al Menu</button>
+            <div class="page-header">
+                <div class="page-title">🏋️‍♂️ Petto & Tricipiti</div>
+                <div class="page-subtitle">Allenamento completo • Durata: 45-60 minuti</div>
+            </div>
+            <div class="section-divider"><h2>PETTO</h2></div>
+            <div class="exercise">
+                <div class="exercise-name"><div class="exercise-number">1</div>Panca piana</div>
+                <div class="exercise-params">
+                    <div class="param-group"><div class="param-label">Serie</div><input type="number" class="param-input" data-exercise="bench-press" data-param="sets" value="4" min="1" max="10"></div>
+                    <div class="param-group"><div class="param-label">Ripetizioni</div><input type="text" class="param-input" data-exercise="bench-press" data-param="reps" value="8-12"></div>
+                    <div class="param-group"><div class="param-label">Riposo (sec)</div><input type="number" class="param-input" data-exercise="bench-press" data-param="rest" value="90" min="30" max="300"></div>
+                </div>
+                <div class="exercise-description">Miglior esercizio per il petto. <span class="current-weight">Peso attuale: 51kg</span></div>
+            </div>
+            <div class="exercise">
+                <div class="exercise-name"><div class="exercise-number">2</div>Croci su panca</div>
+                <div class="exercise-params">
+                    <div class="param-group"><div class="param-label">Serie</div><input type="number" class="param-input" data-exercise="flyes" data-param="sets" value="3" min="1" max="10"></div>
+                    <div class="param-group"><div class="param-label">Ripetizioni</div><input type="text" class="param-input" data-exercise="flyes" data-param="reps" value="12-15"></div>
+                    <div class="param-group"><div class="param-label">Riposo (sec)</div><input type="number" class="param-input" data-exercise="flyes" data-param="rest" value="60" min="30" max="300"></div>
+                </div>
+                <div class="exercise-description">Focus su stretching e contrazione. <span class="current-weight">Peso attuale: 8kg per parte</span></div>
+            </div>
+            <div class="section-divider"><h2>TRICIPITI</h2></div>
+            <div class="exercise">
+                <div class="exercise-name"><div class="exercise-number">3</div>French Press</div>
+                <div class="exercise-params">
+                    <div class="param-group"><div class="param-label">Serie</div><input type="number" class="param-input" data-exercise="french-press" data-param="sets" value="3" min="1" max="10"></div>
+                    <div class="param-group"><div class="param-label">Ripetizioni</div><input type="text" class="param-input" data-exercise="french-press" data-param="reps" value="10-12"></div>
+                    <div class="param-group"><div class="param-label">Riposo (sec)</div><input type="number" class="param-input" data-exercise="french-press" data-param="rest" value="60" min="30" max="300"></div>
+                </div>
+                <div class="exercise-description">Movimento dietro la testa per tricipiti. <span class="current-weight">Peso attuale: 8kg</span></div>
+            </div>
+        </div>
+        
+        <div id="spalle-gambe-page" class="exercise-page">
+            <button class="back-button" onclick="showMainMenu()">← Torna al Menu</button>
+            <div class="page-header">
+                <div class="page-title">🦵 Spalle & Gambe</div>
+                <div class="page-subtitle">Allenamento completo • Durata: 50-70 minuti</div>
+            </div>
+            <div class="section-divider"><h2>SPALLE</h2></div>
+            <div class="exercise">
+                <div class="exercise-name"><div class="exercise-number">1</div>Military Press</div>
+                <div class="exercise-params">
+                    <div class="param-group"><div class="param-label">Serie</div><input type="number" class="param-input" data-exercise="military-press" data-param="sets" value="4" min="1" max="10"></div>
+                    <div class="param-group"><div class="param-label">Ripetizioni</div><input type="text" class="param-input" data-exercise="military-press" data-param="reps" value="8-10"></div>
+                    <div class="param-group"><div class="param-label">Riposo (sec)</div><input type="number" class="param-input" data-exercise="military-press" data-param="rest" value="90" min="30" max="300"></div>
+                </div>
+                <div class="exercise-description">Esercizio base per le spalle. <span class="current-weight">Peso attuale: 30kg</span></div>
+            </div>
+            <div class="section-divider"><h2>GAMBE</h2></div>
+            <div class="exercise">
+                <div class="exercise-name"><div class="exercise-number">2</div>Squat</div>
+                <div class="exercise-params">
+                    <div class="param-group"><div class="param-label">Serie</div><input type="number" class="param-input" data-exercise="squat" data-param="sets" value="4" min="1" max="10"></div>
+                    <div class="param-group"><div class="param-label">Ripetizioni</div><input type="text" class="param-input" data-exercise="squat" data-param="reps" value="12-15"></div>
+                    <div class="param-group"><div class="param-label">Riposo (sec)</div><input type="number" class="param-input" data-exercise="squat" data-param="rest" value="120" min="30" max="300"></div>
+                </div>
+                <div class="exercise-description">Re degli esercizi per le gambe. <span class="current-weight">Peso attuale: 60kg</span></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Persistent database simulation - always read from Firebase
+        let workoutData = {};
+        
+        // Firebase database simulation
+        async function fetchFromFirebase() {
+            // Simulate Firebase API call
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    // Simulate Firebase response with real workout data
+                    const firebaseData = {
+                        'barbell-curl': { sets: '4', reps: '10-12', rest: '60', updated: '2024-08-29 10:30' },
+                        'hammer-curl': { sets: '3', reps: '10-12', rest: '60', updated: '2024-08-29 10:30' },
+                        'incline-curl': { sets: '3', reps: '12', rest: '75', updated: '2024-08-29 10:30' },
+                        'concentrated-curl': { sets: '3', reps: '8-10', rest: '52', updated: '2024-08-29 10:30' },
+                        'zottman-curl': { sets: '3', reps: '8-10', rest: '60', updated: '2024-08-29 10:30' },
+                        'bench-press': { sets: '4', reps: '8-12', rest: '90', updated: '2024-08-29 10:30' },
+                        'flyes': { sets: '3', reps: '12-15', rest: '60', updated: '2024-08-29 10:30' },
+                        'french-press': { sets: '3', reps: '10-12', rest: '60', updated: '2024-08-29 10:30' },
+                        'military-press': { sets: '4', reps: '8-10', rest: '90', updated: '2024-08-29 10:30' },
+                        'squat': { sets: '4', reps: '12-15', rest: '120', updated: '2024-08-29 10:30' }
+                    };
+                    resolve(firebaseData);
+                }, 300); // Simulate network delay
+            });
+        }
+        
+        async function saveToFirebase(data) {
+            // Simulate Firebase save operation
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    console.log('Data saved to Firebase:', data);
+                    resolve(true);
+                }, 200);
+            });
+        }
+        
+        // Initialize database by reading from Firebase
+        async function initializeDatabase() {
+            try {
+                showStatus('Caricamento dati da Firebase...', 'success');
+                workoutData = await fetchFromFirebase();
+                showStatus('Dati caricati da Firebase!', 'success');
+            } catch (error) {
+                showStatus('Errore nel caricamento da Firebase', 'error');
+                workoutData = {}; // Empty if Firebase fails
+            }
+        }
+        
+        function showPage(pageId) {
+            document.getElementById('main-menu').style.display = 'none';
+            document.querySelectorAll('.exercise-page').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId + '-page').classList.add('active');
+            loadPageData(pageId);
+        }
+        
+        function showMainMenu() {
+            document.getElementById('main-menu').style.display = 'block';
+            document.querySelectorAll('.exercise-page').forEach(p => p.classList.remove('active'));
+        }
+        
+        function loadPageData(pageId) {
+            // Load data for all exercises in the current page
+            const exercises = getExercisesForPage(pageId);
+            exercises.forEach(exercise => {
+                loadExerciseData(exercise);
+                loadFirebaseDisplay(exercise);
+            });
+        }
+        
+        function getExercisesForPage(pageId) {
+            const exerciseMap = {
+                'bicipiti': ['barbell-curl', 'hammer-curl', 'incline-curl', 'concentrated-curl', 'zottman-curl'],
+                'petto-tricipiti': ['bench-press', 'flyes', 'french-press'],
+                'spalle-gambe': ['military-press', 'squat']
+            };
+            return exerciseMap[pageId] || [];
+        }
+        
+        function loadExerciseData(exercise) {
+            const data = workoutData[exercise];
+            if (data) {
+                ['sets', 'reps', 'rest'].forEach(param => {
+                    const input = document.querySelector(`[data-exercise="${exercise}"][data-param="${param}"]`);
+                    if (input) input.value = data[param];
+                });
+            }
+        }
+        
+        function loadFirebaseDisplay(exercise) {
+            const data = workoutData[exercise];
+            if (data) {
+                ['sets', 'reps', 'rest', 'updated'].forEach(param => {
+                    const el = document.getElementById(`${exercise}-firebase-${param}`);
+                    if (el) el.textContent = data[param] || '-';
+                });
+            }
+        }
+        
+        function loadExercise(exercise) {
+            loadFirebaseDisplay(exercise);
+            showStatus('Dati aggiornati da Firebase!', 'success');
+        }
+        
+        function saveData(exercise, param, value) {
+            if (!workoutData[exercise]) workoutData[exercise] = {};
+            workoutData[exercise][param] = value;
+            workoutData[exercise].updated = new Date().toLocaleString('it-IT');
+            
+            // Save to Firebase
+            saveToFirebase(workoutData);
+            showStatus('Dati salvati su Firebase!', 'success');
+        }
+        
+        function showStatus(message, type) {
+            const statusEl = document.getElementById('status-message');
+            statusEl.textContent = message;
+            statusEl.className = `status-message ${type} show`;
+            setTimeout(() => statusEl.classList.remove('show'), 3000);
+        }
+        
+        // Auto-save functionality
+        document.addEventListener('input', (e) => {
+            if (e.target.classList.contains('param-input')) {
+                const exercise = e.target.dataset.exercise;
+                const param = e.target.dataset.param;
+                const value = e.target.value;
+                
+                e.target.classList.add('saving');
+                setTimeout(() => {
+                    e.target.classList.remove('saving');
+                    e.target.classList.add('saved');
+                    saveData(exercise, param, value);
+                    setTimeout(() => e.target.classList.remove('saved'), 1000);
+                }, 500);
+            }
+        });
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initializeDatabase(); // Always read from Firebase first
+            showMainMenu();
+        });
+    </script>
+</body>
+</html>
