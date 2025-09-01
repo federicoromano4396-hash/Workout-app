@@ -34,7 +34,9 @@
         window.firebaseOnValue = onValue;
         
         // Initialize the app after Firebase is loaded
-        window.initWorkoutApp();
+        window.addEventListener('DOMContentLoaded', () => {
+            window.initWorkoutApp();
+        });
     </script>
     
     <style>
@@ -75,17 +77,6 @@
         .param-input.saved{border-color:#27ae60;box-shadow:0 0 0 3px rgba(39,174,96,0.1)}
         .exercise-description{background:linear-gradient(135deg,#e8f4f8,#f0f8ff);padding:15px;border-radius:12px;border-left:4px solid #3498db;color:#2c3e50;margin-top:15px;font-size:0.95rem;line-height:1.5}
         .current-weight{font-weight:700;color:#e74c3c}
-        .firebase-display{background:linear-gradient(135deg,#e8f5e8,#f0fff0);border:2px solid #27ae60;border-radius:15px;padding:20px;margin-bottom:20px;box-shadow:0 5px 15px rgba(39,174,96,0.1)}
-        .firebase-title{font-weight:700;color:#27ae60;margin-bottom:15px;font-size:1.1rem;text-align:center}
-        .firebase-data{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-bottom:15px}
-        .firebase-item{background:rgba(39,174,96,0.1);padding:10px;border-radius:8px;text-align:center;border:1px solid rgba(39,174,96,0.2)}
-        .firebase-label{display:block;font-size:0.8rem;font-weight:600;color:#27ae60;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px}
-        .firebase-value{display:block;font-size:1.1rem;font-weight:700;color:#2c3e50}
-        .refresh-button,.save-button{border:none;border-radius:20px;font-weight:600;cursor:pointer;transition:all 0.3s ease}
-        .refresh-button{background:linear-gradient(135deg,#3498db,#2980b9);color:white;padding:8px 20px;font-size:0.85rem;display:block;margin:0 auto}
-        .refresh-button:hover{transform:translateY(-1px);box-shadow:0 5px 15px rgba(52,152,219,0.3)}
-        .save-button{background:linear-gradient(135deg,#27ae60,#2ecc71);color:white;padding:12px 25px;font-size:0.95rem;margin-top:15px}
-        .save-button:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(39,174,96,0.3)}
         .status-message{padding:15px 20px;border-radius:12px;margin:15px 0;font-weight:600;text-align:center;opacity:0;transition:opacity 0.3s ease}
         .status-message.success{background:rgba(212,237,218,0.9);color:#155724;border:1px solid rgba(195,230,203,0.5)}
         .status-message.error{background:rgba(248,215,218,0.9);color:#721c24;border:1px solid rgba(245,198,203,0.5)}
@@ -96,6 +87,7 @@
         .workout-notes li{margin-bottom:8px}
         .section-divider{text-align:center;margin:40px 0 30px 0;padding:15px;background:rgba(255,255,255,0.1);border-radius:15px;backdrop-filter:blur(10px)}
         .section-divider h2{font-size:1.8rem;font-weight:700;color:white}
+        .loading-indicator{display:inline-block;margin-left:10px;font-size:0.9rem;opacity:0.7}
         @media (max-width:768px){.container{padding:15px}.main-title{font-size:2.5rem}.workout-cards{grid-template-columns:1fr;gap:20px}.exercise-params{grid-template-columns:1fr}}
     </style>
 </head>
@@ -134,16 +126,6 @@
             
             <div class="exercise">
                 <div class="exercise-name"><div class="exercise-number">1</div>Barbell Curl (Curl con bilanciere)</div>
-                <div class="firebase-display">
-                    <div class="firebase-title">📊 Dati Salvati</div>
-                    <div class="firebase-data">
-                        <div class="firebase-item"><span class="firebase-label">Serie:</span><span id="barbell-curl-firebase-sets" class="firebase-value">-</span></div>
-                        <div class="firebase-item"><span class="firebase-label">Ripetizioni:</span><span id="barbell-curl-firebase-reps" class="firebase-value">-</span></div>
-                        <div class="firebase-item"><span class="firebase-label">Riposo:</span><span id="barbell-curl-firebase-rest" class="firebase-value">-</span></div>
-                        <div class="firebase-item"><span class="firebase-label">Aggiornamento:</span><span id="barbell-curl-firebase-updated" class="firebase-value">-</span></div>
-                    </div>
-                    <button class="refresh-button" onclick="loadExercise('barbell-curl')">🔄 Aggiorna</button>
-                </div>
                 <div class="exercise-params">
                     <div class="param-group"><div class="param-label">Serie</div><input type="number" class="param-input" data-exercise="barbell-curl" data-param="sets" value="4" min="1" max="10"></div>
                     <div class="param-group"><div class="param-label">Ripetizioni</div><input type="text" class="param-input" data-exercise="barbell-curl" data-param="reps" value="10-12"></div>
@@ -260,117 +242,188 @@
     </div>
 
     <script>
-        // Persistent database simulation - always read from Firebase
+        // Global variables
         let workoutData = {};
+        let isLoadingData = false;
         
-        // Firebase database simulation
-        async function fetchFromFirebase() {
-            // Simulate Firebase API call
-            return new Promise((resolve) => {
-                setTimeout(() => {
-                    // Simulate Firebase response with real workout data
-                    const firebaseData = {
-                        'barbell-curl': { sets: '4', reps: '10-12', rest: '60', updated: '2024-08-29 10:30' },
-                        'hammer-curl': { sets: '3', reps: '10-12', rest: '60', updated: '2024-08-29 10:30' },
-                        'incline-curl': { sets: '3', reps: '12', rest: '75', updated: '2024-08-29 10:30' },
-                        'concentrated-curl': { sets: '3', reps: '8-10', rest: '52', updated: '2024-08-29 10:30' },
-                        'zottman-curl': { sets: '3', reps: '8-10', rest: '60', updated: '2024-08-29 10:30' },
-                        'bench-press': { sets: '4', reps: '8-12', rest: '90', updated: '2024-08-29 10:30' },
-                        'flyes': { sets: '3', reps: '12-15', rest: '60', updated: '2024-08-29 10:30' },
-                        'french-press': { sets: '3', reps: '10-12', rest: '60', updated: '2024-08-29 10:30' },
-                        'military-press': { sets: '4', reps: '8-10', rest: '90', updated: '2024-08-29 10:30' },
-                        'squat': { sets: '4', reps: '12-15', rest: '120', updated: '2024-08-29 10:30' }
-                    };
-                    resolve(firebaseData);
-                }, 300); // Simulate network delay
+        // Initialize the workout app
+        window.initWorkoutApp = async function() {
+            console.log('🚀 INIZIALIZZAZIONE APP...');
+            
+            // Verifica se Firebase è caricato correttamente
+            console.log('🔍 Verifica Firebase:', {
+                firebaseDB: !!window.firebaseDB,
+                firebaseRef: !!window.firebaseRef,
+                firebaseGet: !!window.firebaseGet,
+                firebaseSet: !!window.firebaseSet,
+                firebaseOnValue: !!window.firebaseOnValue
             });
-        }
-        
-        async function saveToFirebase(data) {
-            // Simulate Firebase save operation
-            return new Promise((resolve) => {
-                setTimeout(() => {
-                    console.log('Data saved to Firebase:', data);
-                    resolve(true);
-                }, 200);
-            });
-        }
-        
-        // Initialize database by reading from Firebase
-        async function initializeDatabase() {
-            try {
-                showStatus('Caricamento dati da Firebase...', 'success');
-                workoutData = await fetchFromFirebase();
-                showStatus('Dati caricati da Firebase!', 'success');
-            } catch (error) {
-                showStatus('Errore nel caricamento da Firebase', 'error');
-                workoutData = {}; // Empty if Firebase fails
+            
+            if (!window.firebaseDB || !window.firebaseRef || !window.firebaseGet || !window.firebaseSet) {
+                console.error('❌ FIREBASE NON CARICATO CORRETTAMENTE!');
+                showStatus('❌ Errore: Firebase non caricato', 'error');
+                return;
             }
+            
+            showStatus('📡 Caricamento dati da Firebase...', 'success');
+            await loadAllDataFromFirebase();
+        };
+        
+        // Load all workout data from Firebase
+        async function loadAllDataFromFirebase() {
+            try {
+                isLoadingData = true;
+                showStatus('📡 Connessione a Firebase...', 'success');
+                
+                // Read from Firebase
+                const dbRef = window.firebaseRef(window.firebaseDB, 'workouts');
+                const snapshot = await window.firebaseGet(dbRef);
+                
+                if (snapshot.exists()) {
+                    workoutData = snapshot.val();
+                    console.log('✅ DATI CARICATI DA FIREBASE:', workoutData);
+                    showStatus('✅ Dati caricati da Firebase!', 'success');
+                } else {
+                    console.log('⚠️ Nessun dato trovato su Firebase, inizializzo con valori predefiniti');
+                    // Initialize with default data if no data exists
+                    workoutData = {
+                        'barbell-curl': { sets: '4', reps: '10-12', rest: '60' },
+                        'hammer-curl': { sets: '3', reps: '10-12', rest: '60' },
+                        'incline-curl': { sets: '3', reps: '12', rest: '75' },
+                        'concentrated-curl': { sets: '3', reps: '8-10', rest: '52' },
+                        'zottman-curl': { sets: '3', reps: '8-10', rest: '60' },
+                        'bench-press': { sets: '4', reps: '8-12', rest: '90' },
+                        'flyes': { sets: '3', reps: '12-15', rest: '60' },
+                        'french-press': { sets: '3', reps: '10-12', rest: '60' },
+                        'military-press': { sets: '4', reps: '8-10', rest: '90' },
+                        'squat': { sets: '4', reps: '12-15', rest: '120' }
+                    };
+                    await saveAllDataToFirebase();
+                    showStatus('🔧 Dati iniziali salvati su Firebase', 'success');
+                }
+                
+                // Update all input fields with loaded data
+                updateAllInputFields();
+                
+            } catch (error) {
+                console.error('❌ ERRORE CONNESSIONE FIREBASE:', error);
+                showStatus('❌ Errore connessione Firebase: ' + error.message, 'error');
+                
+                // Log configurazione Firebase per debug
+                console.error('Configurazione Firebase:', {
+                    database: window.firebaseDB,
+                    ref: window.firebaseRef,
+                    get: window.firebaseGet,
+                    set: window.firebaseSet
+                });
+            } finally {
+                isLoadingData = false;
+            }
+        }
+        
+        // Save all data to Firebase
+        async function saveAllDataToFirebase() {
+            try {
+                const dbRef = window.firebaseRef(window.firebaseDB, 'workouts');
+                await window.firebaseSet(dbRef, workoutData);
+                console.log('Tutti i dati salvati su Firebase');
+            } catch (error) {
+                console.error('Errore nel salvataggio su Firebase:', error);
+                showStatus('Errore nel salvataggio su Firebase', 'error');
+            }
+        }
+        
+        // Save specific exercise data to Firebase
+        async function saveExerciseToFirebase(exercise, param, value) {
+            try {
+                console.log(`🚀 TENTATIVO SALVATAGGIO: ${exercise}.${param} = ${value}`);
+                
+                if (!workoutData[exercise]) {
+                    workoutData[exercise] = {};
+                }
+                
+                workoutData[exercise][param] = value;
+                workoutData[exercise].updated = new Date().toLocaleString('it-IT');
+                
+                console.log('🔧 Stato Firebase prima del salvataggio:', {
+                    database: !!window.firebaseDB,
+                    ref: !!window.firebaseRef,
+                    set: !!window.firebaseSet,
+                    databaseURL: window.firebaseDB ? window.firebaseDB._delegate._databaseURL : 'N/A'
+                });
+                
+                const dbRef = window.firebaseRef(window.firebaseDB, `workouts/${exercise}`);
+                console.log('📍 Path Firebase:', `workouts/${exercise}`);
+                console.log('📦 Dati da salvare:', workoutData[exercise]);
+                
+                await window.firebaseSet(dbRef, workoutData[exercise]);
+                
+                console.log(`✅ SALVATO SU FIREBASE: ${exercise}.${param} = ${value}`);
+                console.log('📊 Dati completi salvati:', workoutData[exercise]);
+                
+                // Mostra messaggio di conferma per il salvataggio delle serie
+                if (param === 'sets') {
+                    showStatus(`✅ Serie salvate su Firebase: ${exercise} = ${value} serie`, 'success');
+                } else {
+                    showStatus(`✅ ${param} salvato su Firebase`, 'success');
+                }
+                
+            } catch (error) {
+                console.error('❌ ERRORE FIREBASE COMPLETO:', error);
+                console.error('❌ Tipo errore:', error.name);
+                console.error('❌ Messaggio:', error.message);
+                console.error('❌ Codice errore:', error.code);
+                console.error('❌ Stack:', error.stack);
+                
+                // Verifica stato Firebase
+                console.error('🔍 Debug Firebase:', {
+                    hasDatabase: !!window.firebaseDB,
+                    hasRef: !!window.firebaseRef,
+                    hasSet: !!window.firebaseSet,
+                    exercise,
+                    param,
+                    value,
+                    dataToSave: workoutData[exercise]
+                });
+                
+                // Messaggio di errore più specifico
+                let errorMsg = 'Errore Firebase';
+                if (error.code === 'PERMISSION_DENIED') {
+                    errorMsg = 'Errore: Permessi Firebase negati';
+                } else if (error.code === 'NETWORK_ERROR') {
+                    errorMsg = 'Errore: Connessione di rete';
+                } else if (error.message) {
+                    errorMsg = `Errore: ${error.message}`;
+                }
+                
+                showStatus(`❌ ${errorMsg}`, 'error');
+            }
+        }
+        
+        // Update all input fields with current data
+        function updateAllInputFields() {
+            Object.keys(workoutData).forEach(exercise => {
+                const data = workoutData[exercise];
+                if (data) {
+                    ['sets', 'reps', 'rest'].forEach(param => {
+                        const input = document.querySelector(`[data-exercise="${exercise}"][data-param="${param}"]`);
+                        if (input && data[param]) {
+                            input.value = data[param];
+                        }
+                    });
+                }
+            });
         }
         
         function showPage(pageId) {
             document.getElementById('main-menu').style.display = 'none';
             document.querySelectorAll('.exercise-page').forEach(p => p.classList.remove('active'));
             document.getElementById(pageId + '-page').classList.add('active');
-            loadPageData(pageId);
         }
         
         function showMainMenu() {
             document.getElementById('main-menu').style.display = 'block';
             document.querySelectorAll('.exercise-page').forEach(p => p.classList.remove('active'));
-        }
-        
-        function loadPageData(pageId) {
-            // Load data for all exercises in the current page
-            const exercises = getExercisesForPage(pageId);
-            exercises.forEach(exercise => {
-                loadExerciseData(exercise);
-                loadFirebaseDisplay(exercise);
-            });
-        }
-        
-        function getExercisesForPage(pageId) {
-            const exerciseMap = {
-                'bicipiti': ['barbell-curl', 'hammer-curl', 'incline-curl', 'concentrated-curl', 'zottman-curl'],
-                'petto-tricipiti': ['bench-press', 'flyes', 'french-press'],
-                'spalle-gambe': ['military-press', 'squat']
-            };
-            return exerciseMap[pageId] || [];
-        }
-        
-        function loadExerciseData(exercise) {
-            const data = workoutData[exercise];
-            if (data) {
-                ['sets', 'reps', 'rest'].forEach(param => {
-                    const input = document.querySelector(`[data-exercise="${exercise}"][data-param="${param}"]`);
-                    if (input) input.value = data[param];
-                });
-            }
-        }
-        
-        function loadFirebaseDisplay(exercise) {
-            const data = workoutData[exercise];
-            if (data) {
-                ['sets', 'reps', 'rest', 'updated'].forEach(param => {
-                    const el = document.getElementById(`${exercise}-firebase-${param}`);
-                    if (el) el.textContent = data[param] || '-';
-                });
-            }
-        }
-        
-        function loadExercise(exercise) {
-            loadFirebaseDisplay(exercise);
-            showStatus('Dati aggiornati da Firebase!', 'success');
-        }
-        
-        function saveData(exercise, param, value) {
-            if (!workoutData[exercise]) workoutData[exercise] = {};
-            workoutData[exercise][param] = value;
-            workoutData[exercise].updated = new Date().toLocaleString('it-IT');
-            
-            // Save to Firebase
-            saveToFirebase(workoutData);
-            showStatus('Dati salvati su Firebase!', 'success');
         }
         
         function showStatus(message, type) {
@@ -381,27 +434,30 @@
         }
         
         // Auto-save functionality
-        document.addEventListener('input', (e) => {
-            if (e.target.classList.contains('param-input')) {
+        document.addEventListener('input', async (e) => {
+            if (e.target.classList.contains('param-input') && !isLoadingData) {
                 const exercise = e.target.dataset.exercise;
                 const param = e.target.dataset.param;
                 const value = e.target.value;
                 
+                // Visual feedback
                 e.target.classList.add('saving');
-                setTimeout(() => {
+                
+                try {
+                    await saveExerciseToFirebase(exercise, param, value);
+                    
                     e.target.classList.remove('saving');
                     e.target.classList.add('saved');
-                    saveData(exercise, param, value);
+                    
                     setTimeout(() => e.target.classList.remove('saved'), 1000);
-                }, 500);
+                    
+                } catch (error) {
+                    e.target.classList.remove('saving');
+                    console.error('Errore nel salvataggio:', error);
+                }
             }
-        });
-        
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', async () => {
-            await initializeDatabase(); // Always read from Firebase first
-            showMainMenu();
         });
     </script>
 </body>
 </html>
+                
