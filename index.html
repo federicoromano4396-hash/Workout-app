@@ -349,7 +349,7 @@
                     database: !!window.firebaseDB,
                     ref: !!window.firebaseRef,
                     set: !!window.firebaseSet,
-                    databaseURL: window.firebaseDB ? window.firebaseDB._delegate._databaseURL : 'N/A'
+                    
                 });
                 
                 const dbRef = window.firebaseRef(window.firebaseDB, `workouts/${exercise}`);
