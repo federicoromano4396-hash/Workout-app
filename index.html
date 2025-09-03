@@ -43,6 +43,11 @@
         *{margin:0;padding:0;box-sizing:border-box}
         body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#1e3c72 0%,#2a5298 100%);min-height:100vh;color:white}
         .container{max-width:900px;margin:0 auto;padding:20px}
+        
+        /* Page visibility control */
+        .page{display:none}
+        .page.active{display:block}
+        
         .main-menu{text-align:center;padding:40px 20px}
         .main-title{font-size:3rem;font-weight:800;margin-bottom:10px;background:linear-gradient(45deg,#ff6b6b,#ffd93d,#6bcf7f,#4d79ff);background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:gradientShift 3s ease infinite}
         @keyframes gradientShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
@@ -56,8 +61,7 @@
         .workout-icon{font-size:3rem;margin-bottom:15px;display:block}
         .workout-title{font-size:1.5rem;font-weight:700;margin-bottom:10px}
         .workout-info{opacity:0.9;font-size:0.95rem;line-height:1.4}
-        .exercise-page{display:none}
-        .exercise-page.active{display:block}
+        
         .page-header{text-align:center;margin-bottom:30px;padding:30px;background:rgba(255,255,255,0.1);border-radius:20px;backdrop-filter:blur(10px)}
         .back-button{background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);color:white;padding:10px 20px;border-radius:25px;cursor:pointer;font-size:0.9rem;font-weight:600;margin-bottom:20px;transition:all 0.3s ease}
         .back-button:hover{background:rgba(255,255,255,0.3);transform:translateX(-3px)}
@@ -81,6 +85,18 @@
         .timer-button.running{background:linear-gradient(135deg,#e74c3c,#c0392b);animation:pulse 1s infinite}
         .timer-display{font-size:1.2rem;font-weight:bold;color:#2c3e50;margin-top:5px;min-height:24px}
         .timer-display.active{color:#e74c3c;font-size:1.4rem}
+        
+        /* Serie Progress Dots */
+        .series-progress{margin-top:15px;padding:15px;background:#f1f3f4;border-radius:10px}
+        .series-label{font-size:0.9rem;font-weight:600;color:#495057;margin-bottom:10px;text-align:center}
+        .progress-dots{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap}
+        .progress-dot{width:16px;height:16px;border-radius:50%;border:2px solid #dee2e6;background:#ffffff;transition:all 0.3s ease;cursor:pointer;position:relative}
+        .progress-dot:hover{transform:scale(1.1);border-color:#3498db}
+        .progress-dot.completed{background:linear-gradient(135deg,#27ae60,#2ecc71);border-color:#27ae60;box-shadow:0 0 10px rgba(39,174,96,0.4)}
+        .progress-dot.completed::after{content:'✓';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:white;font-size:10px;font-weight:bold}
+        .progress-dot.current{border-color:#e74c3c;background:#fff5f5;animation:currentDotPulse 1.5s infinite}
+        @keyframes currentDotPulse{0%,100%{box-shadow:0 0 0 0 rgba(231,76,60,0.4)}50%{box-shadow:0 0 0 4px rgba(231,76,60,0.1)}}
+        
         @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
         .status-message{padding:15px 20px;border-radius:12px;margin:15px 0;font-weight:600;text-align:center;opacity:0;transition:opacity 0.3s ease}
         .status-message.success{background:rgba(212,237,218,0.9);color:#155724;border:1px solid rgba(195,230,203,0.5)}
@@ -92,32 +108,36 @@
 </head>
 <body>
     <div class="container">
-        <div id="main-menu" class="main-menu">
-            <div class="main-title">💪 Workout Tracker</div>
-            <div class="main-subtitle">Scegli la tua routine di allenamento</div>
-            <div class="workout-cards">
-                <div class="workout-card bicipiti" onclick="showPage('bicipiti')">
-                    <div class="workout-icon">💪</div>
-                    <div class="workout-title">Routine Bicipiti</div>
-                    <div class="workout-info"><span>⏱ 30-45 min</span><br><span>🏋️ 5 esercizi</span></div>
-                </div>
-                <div class="workout-card petto-tricipiti" onclick="showPage('petto-tricipiti')">
-                    <div class="workout-icon">🏋️‍♂️</div>
-                    <div class="workout-title">Petto & Tricipiti</div>
-                    <div class="workout-info"><span>⏱ 45-60 min</span><br><span>🏋️ 4 esercizi</span></div>
-                </div>
-                <div class="workout-card spalle-gambe" onclick="showPage('spalle-gambe')">
-                    <div class="workout-icon">🦵</div>
-                    <div class="workout-title">Spalle & Gambe</div>
-                    <div class="workout-info"><span>⏱ 50-70 min</span><br><span>🏋️ 4 esercizi</span></div>
+        <!-- HOME PAGE -->
+        <div id="home-page" class="page active">
+            <div class="main-menu">
+                <div class="main-title">💪 Workout Tracker</div>
+                <div class="main-subtitle">Scegli la tua routine di allenamento</div>
+                <div class="workout-cards">
+                    <div class="workout-card bicipiti" onclick="showPage('bicipiti')">
+                        <div class="workout-icon">💪</div>
+                        <div class="workout-title">Routine Bicipiti</div>
+                        <div class="workout-info"><span>⏱ 30-45 min</span><br><span>🏋️ 5 esercizi</span></div>
+                    </div>
+                    <div class="workout-card petto-tricipiti" onclick="showPage('petto-tricipiti')">
+                        <div class="workout-icon">🏋️‍♂️</div>
+                        <div class="workout-title">Petto & Tricipiti</div>
+                        <div class="workout-info"><span>⏱ 45-60 min</span><br><span>🏋️ 4 esercizi</span></div>
+                    </div>
+                    <div class="workout-card spalle-gambe" onclick="showPage('spalle-gambe')">
+                        <div class="workout-icon">🦵</div>
+                        <div class="workout-title">Spalle & Gambe</div>
+                        <div class="workout-info"><span>⏱ 50-70 min</span><br><span>🏋️ 4 esercizi</span></div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div id="status-message" class="status-message"></div>
         
-        <div id="bicipiti-page" class="exercise-page">
-            <button class="back-button" onclick="showMainMenu()">← Torna al Menu</button>
+        <!-- BICIPITI PAGE -->
+        <div id="bicipiti-page" class="page">
+            <button class="back-button" onclick="showHomePage()">← Torna al Menu</button>
             <div class="page-header">
                 <div class="page-title">💪 Routine Bicipiti</div>
                 <div class="page-subtitle">Frequenza: 1-2 volte a settimana • Durata: 30-45 minuti</div>
@@ -126,7 +146,7 @@
             <div class="exercise">
                 <div class="exercise-name"><div class="exercise-number">1</div>Barbell Curl (Curl con bilanciere)</div>
                 <div class="exercise-params">
-                    <div class="param-group"><div class="param-label">Serie</div><input type="number" class="param-input" data-exercise="barbell-curl" data-param="sets" value="4" min="1" max="10"></div>
+                    <div class="param-group"><div class="param-label">Serie</div><input type="number" class="param-input" data-exercise="barbell-curl" data-param="sets" value="4" min="1" max="10" onchange="updateSeriesProgress('barbell-curl')"></div>
                     <div class="param-group"><div class="param-label">Ripetizioni</div><input type="text" class="param-input" data-exercise="barbell-curl" data-param="reps" value="10-12"></div>
                     <div class="param-group"><div class="param-label">Peso (kg)</div><input type="number" class="param-input" data-exercise="barbell-curl" data-param="weight" value="23" min="0" max="999" step="0.5"></div>
                     <div class="param-group timer-group">
@@ -136,12 +156,16 @@
                         <div class="timer-display" id="timer-barbell-curl"></div>
                     </div>
                 </div>
+                <div class="series-progress">
+                    <div class="series-label">Progresso Serie</div>
+                    <div class="progress-dots" id="progress-barbell-curl"></div>
+                </div>
             </div>
             
             <div class="exercise">
                 <div class="exercise-name"><div class="exercise-number">2</div>Hammer Curl (Curl martello)</div>
                 <div class="exercise-params">
-                    <div class="param-group"><div class="param-label">Serie</div><input type="number" class="param-input" data-exercise="hammer-curl" data-param="sets" value="3" min="1" max="10"></div>
+                    <div class="param-group"><div class="param-label">Serie</div><input type="number" class="param-input" data-exercise="hammer-curl" data-param="sets" value="3" min="1" max="10" onchange="updateSeriesProgress('hammer-curl')"></div>
                     <div class="param-group"><div class="param-label">Ripetizioni</div><input type="text" class="param-input" data-exercise="hammer-curl" data-param="reps" value="11"></div>
                     <div class="param-group"><div class="param-label">Peso (kg)</div><input type="number" class="param-input" data-exercise="hammer-curl" data-param="weight" value="12" min="0" max="999" step="0.5"></div>
                     <div class="param-group timer-group">
@@ -151,12 +175,20 @@
                         <div class="timer-display" id="timer-hammer-curl"></div>
                     </div>
                 </div>
+                <div class="series-progress">
+                    <div class="series-label">Progresso Serie</div>
+                    <div class="progress-dots" id="progress-hammer-curl">
+                        <span class="progress-dot" onclick="toggleSeries('hammer-curl', 1)" title="Serie 1">○</span>
+                        <span class="progress-dot" onclick="toggleSeries('hammer-curl', 2)" title="Serie 2">○</span>
+                        <span class="progress-dot" onclick="toggleSeries('hammer-curl', 3)" title="Serie 3">○</span>
+                    </div>
+                </div>
             </div>
             
             <div class="exercise">
                 <div class="exercise-name"><div class="exercise-number">3</div>Incline Dumbbell Curl</div>
                 <div class="exercise-params">
-                    <div class="param-group"><div class="param-label">Serie</div><input type="number" class="param-input" data-exercise="incline-curl" data-param="sets" value="3" min="1" max="10"></div>
+                    <div class="param-group"><div class="param-label">Serie</div><input type="number" class="param-input" data-exercise="incline-curl" data-param="sets" value="3" min="1" max="10" onchange="updateSeriesProgress('incline-curl')"></div>
                     <div class="param-group"><div class="param-label">Ripetizioni</div><input type="text" class="param-input" data-exercise="incline-curl" data-param="reps" value="10"></div>
                     <div class="param-group"><div class="param-label">Peso (kg)</div><input type="number" class="param-input" data-exercise="incline-curl" data-param="weight" value="10" min="0" max="999" step="0.5"></div>
                     <div class="param-group timer-group">
@@ -166,12 +198,16 @@
                         <div class="timer-display" id="timer-incline-curl"></div>
                     </div>
                 </div>
+                <div class="series-progress">
+                    <div class="series-label">Progresso Serie</div>
+                    <div class="progress-dots" id="progress-incline-curl"></div>
+                </div>
             </div>
             
             <div class="exercise">
                 <div class="exercise-name"><div class="exercise-number">4</div>Concentrated Curl</div>
                 <div class="exercise-params">
-                    <div class="param-group"><div class="param-label">Serie</div><input type="number" class="param-input" data-exercise="concentrated-curl" data-param="sets" value="3" min="1" max="10"></div>
+                    <div class="param-group"><div class="param-label">Serie</div><input type="number" class="param-input" data-exercise="concentrated-curl" data-param="sets" value="3" min="1" max="10" onchange="updateSeriesProgress('concentrated-curl')"></div>
                     <div class="param-group"><div class="param-label">Ripetizioni</div><input type="text" class="param-input" data-exercise="concentrated-curl" data-param="reps" value="8-10"></div>
                     <div class="param-group"><div class="param-label">Peso (kg)</div><input type="number" class="param-input" data-exercise="concentrated-curl" data-param="weight" value="10" min="0" max="999" step="0.5"></div>
                     <div class="param-group timer-group">
@@ -181,12 +217,16 @@
                         <div class="timer-display" id="timer-concentrated-curl"></div>
                     </div>
                 </div>
+                <div class="series-progress">
+                    <div class="series-label">Progresso Serie</div>
+                    <div class="progress-dots" id="progress-concentrated-curl"></div>
+                </div>
             </div>
             
             <div class="exercise">
                 <div class="exercise-name"><div class="exercise-number">5</div>Zottman Curl</div>
                 <div class="exercise-params">
-                    <div class="param-group"><div class="param-label">Serie</div><input type="number" class="param-input" data-exercise="zottman-curl" data-param="sets" value="3" min="1" max="10"></div>
+                    <div class="param-group"><div class="param-label">Serie</div><input type="number" class="param-input" data-exercise="zottman-curl" data-param="sets" value="3" min="1" max="10" onchange="updateSeriesProgress('zottman-curl')"></div>
                     <div class="param-group"><div class="param-label">Ripetizioni</div><input type="text" class="param-input" data-exercise="zottman-curl" data-param="reps" value="8-10"></div>
                     <div class="param-group"><div class="param-label">Peso (kg)</div><input type="number" class="param-input" data-exercise="zottman-curl" data-param="weight" value="8" min="0" max="999" step="0.5"></div>
                     <div class="param-group timer-group">
@@ -196,11 +236,16 @@
                         <div class="timer-display" id="timer-zottman-curl"></div>
                     </div>
                 </div>
+                <div class="series-progress">
+                    <div class="series-label">Progresso Serie</div>
+                    <div class="progress-dots" id="progress-zottman-curl"></div>
+                </div>
             </div>
         </div>
         
-        <div id="petto-tricipiti-page" class="exercise-page">
-            <button class="back-button" onclick="showMainMenu()">← Torna al Menu</button>
+        <!-- PETTO-TRICIPITI PAGE -->
+        <div id="petto-tricipiti-page" class="page">
+            <button class="back-button" onclick="showHomePage()">← Torna al Menu</button>
             <div class="page-header">
                 <div class="page-title">🏋️‍♂️ Petto & Tricipiti</div>
                 <div class="page-subtitle">Allenamento completo • Durata: 45-60 minuti</div>
@@ -209,7 +254,7 @@
             <div class="exercise">
                 <div class="exercise-name"><div class="exercise-number">1</div>Panca piana</div>
                 <div class="exercise-params">
-                    <div class="param-group"><div class="param-label">Serie</div><input type="number" class="param-input" data-exercise="bench-press" data-param="sets" value="4" min="1" max="10"></div>
+                    <div class="param-group"><div class="param-label">Serie</div><input type="number" class="param-input" data-exercise="bench-press" data-param="sets" value="4" min="1" max="10" onchange="updateSeriesProgress('bench-press')"></div>
                     <div class="param-group"><div class="param-label">Ripetizioni</div><input type="text" class="param-input" data-exercise="bench-press" data-param="reps" value="8-12"></div>
                     <div class="param-group"><div class="param-label">Peso (kg)</div><input type="number" class="param-input" data-exercise="bench-press" data-param="weight" value="51" min="0" max="999" step="0.5"></div>
                     <div class="param-group timer-group">
@@ -219,12 +264,16 @@
                         <div class="timer-display" id="timer-bench-press"></div>
                     </div>
                 </div>
+                <div class="series-progress">
+                    <div class="series-label">Progresso Serie</div>
+                    <div class="progress-dots" id="progress-bench-press"></div>
+                </div>
             </div>
             
             <div class="exercise">
                 <div class="exercise-name"><div class="exercise-number">2</div>Croci su panca</div>
                 <div class="exercise-params">
-                    <div class="param-group"><div class="param-label">Serie</div><input type="number" class="param-input" data-exercise="flyes" data-param="sets" value="3" min="1" max="10"></div>
+                    <div class="param-group"><div class="param-label">Serie</div><input type="number" class="param-input" data-exercise="flyes" data-param="sets" value="3" min="1" max="10" onchange="updateSeriesProgress('flyes')"></div>
                     <div class="param-group"><div class="param-label">Ripetizioni</div><input type="text" class="param-input" data-exercise="flyes" data-param="reps" value="12-15"></div>
                     <div class="param-group"><div class="param-label">Peso (kg)</div><input type="number" class="param-input" data-exercise="flyes" data-param="weight" value="8" min="0" max="999" step="0.5"></div>
                     <div class="param-group timer-group">
@@ -234,12 +283,16 @@
                         <div class="timer-display" id="timer-flyes"></div>
                     </div>
                 </div>
+                <div class="series-progress">
+                    <div class="series-label">Progresso Serie</div>
+                    <div class="progress-dots" id="progress-flyes"></div>
+                </div>
             </div>
             
             <div class="exercise">
                 <div class="exercise-name"><div class="exercise-number">3</div>French Press</div>
                 <div class="exercise-params">
-                    <div class="param-group"><div class="param-label">Serie</div><input type="number" class="param-input" data-exercise="french-press" data-param="sets" value="3" min="1" max="10"></div>
+                    <div class="param-group"><div class="param-label">Serie</div><input type="number" class="param-input" data-exercise="french-press" data-param="sets" value="3" min="1" max="10" onchange="updateSeriesProgress('french-press')"></div>
                     <div class="param-group"><div class="param-label">Ripetizioni</div><input type="text" class="param-input" data-exercise="french-press" data-param="reps" value="10-12"></div>
                     <div class="param-group"><div class="param-label">Peso (kg)</div><input type="number" class="param-input" data-exercise="french-press" data-param="weight" value="8" min="0" max="999" step="0.5"></div>
                     <div class="param-group timer-group">
@@ -249,12 +302,16 @@
                         <div class="timer-display" id="timer-french-press"></div>
                     </div>
                 </div>
+                <div class="series-progress">
+                    <div class="series-label">Progresso Serie</div>
+                    <div class="progress-dots" id="progress-french-press"></div>
+                </div>
             </div>
             
             <div class="exercise">
                 <div class="exercise-name"><div class="exercise-number">4</div>Estensioni sopra la testa con manubrio</div>
                 <div class="exercise-params">
-                    <div class="param-group"><div class="param-label">Serie</div><input type="number" class="param-input" data-exercise="overhead-extension" data-param="sets" value="3" min="1" max="10"></div>
+                    <div class="param-group"><div class="param-label">Serie</div><input type="number" class="param-input" data-exercise="overhead-extension" data-param="sets" value="3" min="1" max="10" onchange="updateSeriesProgress('overhead-extension')"></div>
                     <div class="param-group"><div class="param-label">Ripetizioni</div><input type="text" class="param-input" data-exercise="overhead-extension" data-param="reps" value="10-12"></div>
                     <div class="param-group"><div class="param-label">Peso (kg)</div><input type="number" class="param-input" data-exercise="overhead-extension" data-param="weight" value="10" min="0" max="999" step="0.5"></div>
                     <div class="param-group timer-group">
@@ -264,11 +321,16 @@
                         <div class="timer-display" id="timer-overhead-extension"></div>
                     </div>
                 </div>
+                <div class="series-progress">
+                    <div class="series-label">Progresso Serie</div>
+                    <div class="progress-dots" id="progress-overhead-extension"></div>
+                </div>
             </div>
         </div>
         
-        <div id="spalle-gambe-page" class="exercise-page">
-            <button class="back-button" onclick="showMainMenu()">← Torna al Menu</button>
+        <!-- SPALLE-GAMBE PAGE -->
+        <div id="spalle-gambe-page" class="page">
+            <button class="back-button" onclick="showHomePage()">← Torna al Menu</button>
             <div class="page-header">
                 <div class="page-title">🦵 Spalle & Gambe</div>
                 <div class="page-subtitle">Allenamento completo • Durata: 50-70 minuti</div>
@@ -277,7 +339,7 @@
             <div class="exercise">
                 <div class="exercise-name"><div class="exercise-number">1</div>Squat con bilanciere</div>
                 <div class="exercise-params">
-                    <div class="param-group"><div class="param-label">Serie</div><input type="number" class="param-input" data-exercise="barbell-squat" data-param="sets" value="4" min="1" max="10"></div>
+                    <div class="param-group"><div class="param-label">Serie</div><input type="number" class="param-input" data-exercise="barbell-squat" data-param="sets" value="4" min="1" max="10" onchange="updateSeriesProgress('barbell-squat')"></div>
                     <div class="param-group"><div class="param-label">Ripetizioni</div><input type="text" class="param-input" data-exercise="barbell-squat" data-param="reps" value="10-12"></div>
                     <div class="param-group"><div class="param-label">Peso (kg)</div><input type="number" class="param-input" data-exercise="barbell-squat" data-param="weight" value="55" min="0" max="999" step="0.5"></div>
                     <div class="param-group timer-group">
@@ -287,12 +349,16 @@
                         <div class="timer-display" id="timer-barbell-squat"></div>
                     </div>
                 </div>
+                <div class="series-progress">
+                    <div class="series-label">Progresso Serie</div>
+                    <div class="progress-dots" id="progress-barbell-squat"></div>
+                </div>
             </div>
             
             <div class="exercise">
                 <div class="exercise-name"><div class="exercise-number">2</div>Military Press</div>
                 <div class="exercise-params">
-                    <div class="param-group"><div class="param-label">Serie</div><input type="number" class="param-input" data-exercise="military-press" data-param="sets" value="4" min="1" max="10"></div>
+                    <div class="param-group"><div class="param-label">Serie</div><input type="number" class="param-input" data-exercise="military-press" data-param="sets" value="4" min="1" max="10" onchange="updateSeriesProgress('military-press')"></div>
                     <div class="param-group"><div class="param-label">Ripetizioni</div><input type="text" class="param-input" data-exercise="military-press" data-param="reps" value="8-10"></div>
                     <div class="param-group"><div class="param-label">Peso (kg)</div><input type="number" class="param-input" data-exercise="military-press" data-param="weight" value="30" min="0" max="999" step="0.5"></div>
                     <div class="param-group timer-group">
@@ -302,12 +368,16 @@
                         <div class="timer-display" id="timer-military-press"></div>
                     </div>
                 </div>
+                <div class="series-progress">
+                    <div class="series-label">Progresso Serie</div>
+                    <div class="progress-dots" id="progress-military-press"></div>
+                </div>
             </div>
             
             <div class="exercise">
                 <div class="exercise-name"><div class="exercise-number">3</div>Affondi in camminata con manubri</div>
                 <div class="exercise-params">
-                    <div class="param-group"><div class="param-label">Serie</div><input type="number" class="param-input" data-exercise="walking-lunges" data-param="sets" value="3" min="1" max="10"></div>
+                    <div class="param-group"><div class="param-label">Serie</div><input type="number" class="param-input" data-exercise="walking-lunges" data-param="sets" value="3" min="1" max="10" onchange="updateSeriesProgress('walking-lunges')"></div>
                     <div class="param-group"><div class="param-label">Ripetizioni</div><input type="text" class="param-input" data-exercise="walking-lunges" data-param="reps" value="12-16"></div>
                     <div class="param-group"><div class="param-label">Peso (kg)</div><input type="number" class="param-input" data-exercise="walking-lunges" data-param="weight" value="8" min="0" max="999" step="0.5"></div>
                     <div class="param-group timer-group">
@@ -317,12 +387,16 @@
                         <div class="timer-display" id="timer-walking-lunges"></div>
                     </div>
                 </div>
+                <div class="series-progress">
+                    <div class="series-label">Progresso Serie</div>
+                    <div class="progress-dots" id="progress-walking-lunges"></div>
+                </div>
             </div>
             
             <div class="exercise">
                 <div class="exercise-name"><div class="exercise-number">4</div>Alzate laterali con manubri</div>
                 <div class="exercise-params">
-                    <div class="param-group"><div class="param-label">Serie</div><input type="number" class="param-input" data-exercise="lateral-raises" data-param="sets" value="3" min="1" max="10"></div>
+                    <div class="param-group"><div class="param-label">Serie</div><input type="number" class="param-input" data-exercise="lateral-raises" data-param="sets" value="3" min="1" max="10" onchange="updateSeriesProgress('lateral-raises')"></div>
                     <div class="param-group"><div class="param-label">Ripetizioni</div><input type="text" class="param-input" data-exercise="lateral-raises" data-param="reps" value="12-15"></div>
                     <div class="param-group"><div class="param-label">Peso (kg)</div><input type="number" class="param-input" data-exercise="lateral-raises" data-param="weight" value="6" min="0" max="999" step="0.5"></div>
                     <div class="param-group timer-group">
@@ -330,6 +404,14 @@
                         <input type="number" class="param-input" data-exercise="lateral-raises" data-param="rest" value="45" min="30" max="300">
                         <button class="timer-button" onclick="startTimer('lateral-raises', 45)">⏱ Avvia Timer</button>
                         <div class="timer-display" id="timer-lateral-raises"></div>
+                    </div>
+                </div>
+                <div class="series-progress">
+                    <div class="series-label">Progresso Serie</div>
+                    <div class="progress-dots" id="progress-lateral-raises">
+                        <span class="progress-dot" onclick="toggleSeries('lateral-raises', 1)" title="Serie 1">○</span>
+                        <span class="progress-dot" onclick="toggleSeries('lateral-raises', 2)" title="Serie 2">○</span>
+                        <span class="progress-dot" onclick="toggleSeries('lateral-raises', 3)" title="Serie 3">○</span>
                     </div>
                 </div>
             </div>
@@ -341,6 +423,172 @@
         let workoutData = {};
         let isLoadingData = false;
         let activeTimers = {};
+        let seriesProgress = {}; // Track completed series for each exercise
+        
+        // Initialize series progress tracking
+        function initializeSeriesProgress() {
+            const exercises = [
+                'barbell-curl', 'hammer-curl', 'incline-curl', 'concentrated-curl', 'zottman-curl',
+                'bench-press', 'flyes', 'french-press', 'overhead-extension',
+                'barbell-squat', 'military-press', 'walking-lunges', 'lateral-raises'
+            ];
+            
+            exercises.forEach(exercise => {
+                if (!seriesProgress[exercise]) {
+                    seriesProgress[exercise] = {
+                        completed: 0,
+                        total: 0
+                    };
+                }
+            });
+        }
+        
+        // Update series progress dots based on sets input
+        function updateSeriesProgress(exerciseId) {
+            const setsInput = document.querySelector(`[data-exercise="${exerciseId}"][data-param="sets"]`);
+            const progressContainer = document.getElementById(`progress-${exerciseId}`);
+            
+            if (!setsInput || !progressContainer) return;
+            
+            const totalSets = parseInt(setsInput.value) || 0;
+            
+            // Update progress tracking
+            if (!seriesProgress[exerciseId]) {
+                seriesProgress[exerciseId] = { completed: 0, total: totalSets };
+            } else {
+                seriesProgress[exerciseId].total = totalSets;
+                // Reset completed if total sets decreased below completed
+                if (seriesProgress[exerciseId].completed > totalSets) {
+                    seriesProgress[exerciseId].completed = totalSets;
+                }
+            }
+            
+            // Clear and rebuild dots
+            progressContainer.innerHTML = '';
+            
+            for (let i = 0; i < totalSets; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'progress-dot';
+                dot.setAttribute('data-series', i + 1);
+                dot.setAttribute('onclick', `toggleSeries('${exerciseId}', ${i + 1})`);
+                dot.setAttribute('title', `Serie ${i + 1}`);
+                
+                // Mark completed series
+                if (i < seriesProgress[exerciseId].completed) {
+                    dot.classList.add('completed');
+                }
+                
+                progressContainer.appendChild(dot);
+            }
+            
+            // Save progress to Firebase
+            if (!isLoadingData) {
+                saveSeriesProgressToFirebase(exerciseId);
+            }
+        }
+        
+        // Toggle series completion manually (click on dot)
+        function toggleSeries(exerciseId, seriesNumber) {
+            if (!seriesProgress[exerciseId]) return;
+            
+            const progressContainer = document.getElementById(`progress-${exerciseId}`);
+            const dots = progressContainer.querySelectorAll('.progress-dot');
+            const dot = dots[seriesNumber - 1];
+            
+            if (dot.classList.contains('completed')) {
+                // Uncomplete this series and all subsequent ones
+                for (let i = seriesNumber - 1; i < dots.length; i++) {
+                    dots[i].classList.remove('completed');
+                }
+                seriesProgress[exerciseId].completed = seriesNumber - 1;
+            } else {
+                // Complete this series and all previous ones
+                for (let i = 0; i < seriesNumber; i++) {
+                    dots[i].classList.add('completed');
+                }
+                seriesProgress[exerciseId].completed = seriesNumber;
+            }
+            
+            saveSeriesProgressToFirebase(exerciseId);
+        }
+        
+        // Complete next series when timer starts
+        function completeNextSeries(exerciseId) {
+            if (!seriesProgress[exerciseId]) return;
+            
+            const { completed, total } = seriesProgress[exerciseId];
+            
+            if (completed < total) {
+                seriesProgress[exerciseId].completed = completed + 1;
+                
+                const progressContainer = document.getElementById(`progress-${exerciseId}`);
+                const dots = progressContainer.querySelectorAll('.progress-dot');
+                
+                if (dots[completed]) {
+                    dots[completed].classList.add('completed');
+                }
+                
+                // Check if all series are completed
+                if (seriesProgress[exerciseId].completed === total) {
+                    showStatus(`🎉 Esercizio ${exerciseId} completato! Tutte le serie finite!`, 'success');
+                } else {
+                    showStatus(`✅ Serie ${seriesProgress[exerciseId].completed}/${total} completata per ${exerciseId}`, 'success');
+                }
+                
+                saveSeriesProgressToFirebase(exerciseId);
+            }
+        }
+        
+        // Save series progress to Firebase
+        async function saveSeriesProgressToFirebase(exerciseId) {
+            try {
+                const dbRef = window.firebaseRef(window.firebaseDB, `seriesProgress/${exerciseId}`);
+                await window.firebaseSet(dbRef, seriesProgress[exerciseId]);
+                console.log(`Series progress saved for ${exerciseId}:`, seriesProgress[exerciseId]);
+            } catch (error) {
+                console.error('Error saving series progress:', error);
+            }
+        }
+        
+        // Load series progress from Firebase
+        async function loadSeriesProgressFromFirebase() {
+            try {
+                const dbRef = window.firebaseRef(window.firebaseDB, 'seriesProgress');
+                const snapshot = await window.firebaseGet(dbRef);
+                
+                if (snapshot.exists()) {
+                    seriesProgress = snapshot.val();
+                    console.log('Series progress loaded from Firebase:', seriesProgress);
+                    
+                    // Update all progress dots
+                    Object.keys(seriesProgress).forEach(exerciseId => {
+                        updateSeriesProgress(exerciseId);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading series progress:', error);
+            }
+        }
+        
+        // Reset all series progress for a workout
+        function resetWorkoutProgress(workoutType) {
+            const exercises = {
+                'bicipiti': ['barbell-curl', 'hammer-curl', 'incline-curl', 'concentrated-curl', 'zottman-curl'],
+                'petto-tricipiti': ['bench-press', 'flyes', 'french-press', 'overhead-extension'],
+                'spalle-gambe': ['barbell-squat', 'military-press', 'walking-lunges', 'lateral-raises']
+            };
+            
+            if (exercises[workoutType]) {
+                exercises[workoutType].forEach(exerciseId => {
+                    if (seriesProgress[exerciseId]) {
+                        seriesProgress[exerciseId].completed = 0;
+                        updateSeriesProgress(exerciseId);
+                        saveSeriesProgressToFirebase(exerciseId);
+                    }
+                });
+                showStatus(`🔄 Reset progresso per ${workoutType}`, 'success');
+            }
+        }
         
         // Timer functionality
         function startTimer(exerciseId, defaultTime) {
@@ -358,6 +606,9 @@
             const timerButton = document.querySelector(`[onclick="startTimer('${exerciseId}', ${defaultTime})"]`);
             
             if (!timerDisplay || !timerButton) return;
+            
+            // Complete next series immediately when timer starts
+            completeNextSeries(exerciseId);
             
             let timeLeft = restTime;
             timerButton.textContent = '⏹ Stop Timer';
@@ -424,9 +675,45 @@
             display.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
         }
         
-        // Initialize the workout app
+        // Navigation functions
+        function showPage(pageId) {
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // Show selected page
+            const targetPage = document.getElementById(pageId + '-page');
+            if (targetPage) {
+                targetPage.classList.add('active');
+            }
+        }
+        
+        function showHomePage() {
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // Show home page
+            document.getElementById('home-page').classList.add('active');
+            
+            // Stop all active timers when returning to home
+            Object.keys(activeTimers).forEach(exerciseId => {
+                clearInterval(activeTimers[exerciseId].interval);
+            });
+            activeTimers = {};
+        }
+        
+        // Initialize the workout app - Enhanced with debug info
         window.initWorkoutApp = async function() {
             console.log('🚀 INIZIALIZZAZIONE APP...');
+            console.log('📱 Device info:', {
+                userAgent: navigator.userAgent,
+                screenWidth: screen.width,
+                viewportWidth: window.innerWidth,
+                isMobile: window.innerWidth <= 768
+            });
             
             // Verifica se Firebase è caricato correttamente
             console.log('🔍 Verifica Firebase:', {
@@ -444,7 +731,51 @@
             }
             
             showStatus('📡 Caricamento dati da Firebase...', 'success');
+            
+            // Initialize series progress
+            initializeSeriesProgress();
+            
+            // Load data
             await loadAllDataFromFirebase();
+            await loadSeriesProgressFromFirebase();
+            
+            // Initialize progress dots for all exercises with debug
+            const exercises = [
+                'barbell-curl', 'hammer-curl', 'incline-curl', 'concentrated-curl', 'zottman-curl',
+                'bench-press', 'flyes', 'french-press', 'overhead-extension',
+                'barbell-squat', 'military-press', 'walking-lunges', 'lateral-raises'
+            ];
+            
+            console.log('🔄 Inizializzazione pallini per', exercises.length, 'esercizi...');
+            
+            exercises.forEach((exerciseId, index) => {
+                console.log(`Inizializzando pallini per esercizio ${index + 1}/${exercises.length}: ${exerciseId}`);
+                updateSeriesProgress(exerciseId);
+                
+                // Verify dots were created
+                const container = document.getElementById(`progress-${exerciseId}`);
+                const dots = container ? container.querySelectorAll('.progress-dot') : [];
+                console.log(`Esercizio ${exerciseId}: ${dots.length} pallini creati`);
+            });
+            
+            // Final verification
+            setTimeout(() => {
+                console.log('🔍 Verifica finale pallini:');
+                exercises.forEach(exerciseId => {
+                    const container = document.getElementById(`progress-${exerciseId}`);
+                    const dots = container ? container.querySelectorAll('.progress-dot') : [];
+                    const setsInput = document.querySelector(`[data-exercise="${exerciseId}"][data-param="sets"]`);
+                    const expectedDots = setsInput ? parseInt(setsInput.value) : 0;
+                    
+                    if (dots.length !== expectedDots) {
+                        console.warn(`⚠️ Problema con ${exerciseId}: attesi ${expectedDots} pallini, trovati ${dots.length}`);
+                        // Try to fix
+                        updateSeriesProgress(exerciseId);
+                    } else {
+                        console.log(`✅ ${exerciseId}: ${dots.length} pallini OK`);
+                    }
+                });
+            }, 1000);
         };
         
         // Load all workout data from Firebase
@@ -602,23 +933,6 @@
             });
         }
         
-        function showPage(pageId) {
-            document.getElementById('main-menu').style.display = 'none';
-            document.querySelectorAll('.exercise-page').forEach(p => p.classList.remove('active'));
-            document.getElementById(pageId + '-page').classList.add('active');
-        }
-        
-        function showMainMenu() {
-            document.getElementById('main-menu').style.display = 'block';
-            document.querySelectorAll('.exercise-page').forEach(p => p.classList.remove('active'));
-            
-            // Stop all active timers when returning to main menu
-            Object.keys(activeTimers).forEach(exerciseId => {
-                clearInterval(activeTimers[exerciseId].interval);
-            });
-            activeTimers = {};
-        }
-        
         function showStatus(message, type) {
             const statusEl = document.getElementById('status-message');
             statusEl.textContent = message;
@@ -643,6 +957,11 @@
                     e.target.classList.add('saved');
                     
                     setTimeout(() => e.target.classList.remove('saved'), 1000);
+                    
+                    // If sets changed, update progress dots
+                    if (param === 'sets') {
+                        updateSeriesProgress(exercise);
+                    }
                     
                 } catch (error) {
                     e.target.classList.remove('saving');
