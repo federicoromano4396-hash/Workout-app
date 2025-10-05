@@ -8,9 +8,8 @@
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
-        import { getDatabase, ref, get, set, onValue } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js';
+        import { getDatabase, ref, get, set, push } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js';
         
-        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyBzkjkN7Avrn8YSRFg8ut-6U23-BB7__tA",
             authDomain: "workout-tracker-11806.firebaseapp.com",
@@ -22,18 +21,15 @@
             measurementId: "G-H4LVRRK0MT"
         };
         
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
         
-        // Make Firebase functions globally available
         window.firebaseDB = database;
         window.firebaseRef = ref;
         window.firebaseGet = get;
         window.firebaseSet = set;
-        window.firebaseOnValue = onValue;
+        window.firebasePush = push;
         
-        // Initialize the app after Firebase is loaded
         window.addEventListener('DOMContentLoaded', () => {
             window.initWorkoutApp();
         });
@@ -44,7 +40,6 @@
         body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#1e3c72 0%,#2a5298 100%);min-height:100vh;color:white}
         .container{max-width:900px;margin:0 auto;padding:20px}
         
-        /* Page visibility control */
         .page{display:none}
         .page.active{display:block}
         
@@ -52,21 +47,28 @@
         .main-title{font-size:3rem;font-weight:800;margin-bottom:10px;background:linear-gradient(45deg,#ff6b6b,#ffd93d,#6bcf7f,#4d79ff);background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:gradientShift 3s ease infinite}
         @keyframes gradientShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
         .main-subtitle{font-size:1.2rem;opacity:0.8;margin-bottom:50px;font-weight:300}
+        
         .workout-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:25px;margin-bottom:40px}
         .workout-card{background:linear-gradient(135deg,rgba(255,255,255,0.1),rgba(255,255,255,0.05));backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.2);border-radius:20px;padding:30px;cursor:pointer;transition:all 0.3s ease;position:relative;overflow:hidden}
         .workout-card:hover{transform:translateY(-5px);box-shadow:0 20px 40px rgba(0,0,0,0.3);border-color:rgba(255,255,255,0.4)}
         .workout-card.bicipiti{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%)}
         .workout-card.petto-tricipiti{background:linear-gradient(135deg,#f093fb 0%,#f5576c 100%)}
         .workout-card.spalle-gambe{background:linear-gradient(135deg,#4facfe 0%,#00f2fe 100%)}
+        .workout-card.history{background:linear-gradient(135deg,#fa709a 0%,#fee140 100%)}
         .workout-icon{font-size:3rem;margin-bottom:15px;display:block}
         .workout-title{font-size:1.5rem;font-weight:700;margin-bottom:10px}
         .workout-info{opacity:0.9;font-size:0.95rem;line-height:1.4}
         
         .page-header{text-align:center;margin-bottom:30px;padding:30px;background:rgba(255,255,255,0.1);border-radius:20px;backdrop-filter:blur(10px)}
-        .back-button{background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);color:white;padding:10px 20px;border-radius:25px;cursor:pointer;font-size:0.9rem;font-weight:600;margin-bottom:20px;transition:all 0.3s ease}
+        .back-button{background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);color:white;padding:10px 20px;border-radius:25px;cursor:pointer;font-size:0.9rem;font-weight:600;margin-bottom:20px;transition:all 0.3s ease;border:none}
         .back-button:hover{background:rgba(255,255,255,0.3);transform:translateX(-3px)}
+        
+        .complete-workout-btn{background:linear-gradient(135deg,#27ae60,#2ecc71);border:none;color:white;padding:15px 30px;border-radius:25px;cursor:pointer;font-size:1.1rem;font-weight:700;margin:30px auto;display:block;transition:all 0.3s ease;box-shadow:0 8px 20px rgba(39,174,96,0.3)}
+        .complete-workout-btn:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(39,174,96,0.4)}
+        
         .page-title{font-size:2.5rem;font-weight:700;margin-bottom:10px}
         .page-subtitle{opacity:0.8;font-size:1.1rem}
+        
         .exercise{background:rgba(255,255,255,0.95);border-radius:20px;padding:25px;margin-bottom:20px;box-shadow:0 10px 30px rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.3);transition:transform 0.2s ease;color:#2c3e50}
         .exercise:hover{transform:translateY(-3px)}
         .exercise-name{font-size:1.4rem;font-weight:700;color:#2c3e50;margin-bottom:15px;display:flex;align-items:center}
@@ -75,6 +77,15 @@
         .param-group{background:#f8f9fa;padding:15px;border-radius:12px;border:2px solid transparent;transition:all 0.3s ease;position:relative}
         .param-group:focus-within{border-color:#3498db;box-shadow:0 0 0 3px rgba(52,152,219,0.1)}
         .param-group.timer-group{display:flex;flex-direction:column;align-items:center}
+        .param-group.has-suggestion{border-color:#f39c12;background:linear-gradient(135deg,#fff9e6,#f8f9fa)}
+        .ai-suggestion{background:linear-gradient(135deg,#f39c12,#e67e22);color:white;padding:8px 12px;border-radius:8px;font-size:0.85rem;margin-top:8px;font-weight:600;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(243,156,18,0.3)}
+        .ai-suggestion-icon{font-size:1.1rem}
+        .suggestion-actions{display:flex;gap:8px;margin-top:8px}
+        .suggestion-btn{padding:6px 12px;border-radius:6px;border:none;cursor:pointer;font-size:0.8rem;font-weight:600;transition:all 0.2s ease}
+        .suggestion-accept{background:#27ae60;color:white}
+        .suggestion-accept:hover{background:#229954;transform:translateY(-1px)}
+        .suggestion-dismiss{background:#95a5a6;color:white}
+        .suggestion-dismiss:hover{background:#7f8c8d;transform:translateY(-1px)}
         .param-label{font-weight:600;color:#495057;margin-bottom:8px;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.5px}
         .param-input{width:100%;padding:12px;border:2px solid #dee2e6;border-radius:8px;font-size:1rem;font-weight:600;transition:all 0.3s ease;background:white}
         .param-input:focus{outline:none;border-color:#3498db;box-shadow:0 0 0 3px rgba(52,152,219,0.1)}
@@ -86,23 +97,55 @@
         .timer-display{font-size:1.2rem;font-weight:bold;color:#2c3e50;margin-top:5px;min-height:24px}
         .timer-display.active{color:#e74c3c;font-size:1.4rem}
         
-        /* Serie Progress Dots */
         .series-progress{margin-top:15px;padding:15px;background:#f1f3f4;border-radius:10px}
         .series-label{font-size:0.9rem;font-weight:600;color:#495057;margin-bottom:10px;text-align:center}
         .progress-dots{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap}
         .progress-dot{width:16px;height:16px;border-radius:50%;border:2px solid #dee2e6;background:#ffffff;transition:all 0.3s ease;cursor:pointer;position:relative}
         .progress-dot:hover{transform:scale(1.1);border-color:#3498db}
         .progress-dot.completed{background:linear-gradient(135deg,#27ae60,#2ecc71);border-color:#27ae60;box-shadow:0 0 10px rgba(39,174,96,0.4)}
-        .progress-dot.completed::after{content:'✓';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:white;font-size:10px;font-weight:bold}
-        .progress-dot.current{border-color:#e74c3c;background:#fff5f5;animation:currentDotPulse 1.5s infinite}
-        @keyframes currentDotPulse{0%,100%{box-shadow:0 0 0 0 rgba(231,76,60,0.4)}50%{box-shadow:0 0 0 4px rgba(231,76,60,0.1)}}
+        
+        /* History page styles */
+        .history-container{display:grid;gap:30px}
+        .calendar-section{background:rgba(255,255,255,0.95);border-radius:20px;padding:25px;box-shadow:0 10px 30px rgba(0,0,0,0.2);color:#2c3e50}
+        .calendar-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+        .calendar-month{font-size:1.5rem;font-weight:700;color:#2c3e50}
+        .calendar-nav{display:flex;gap:10px}
+        .calendar-nav-btn{background:linear-gradient(135deg,#3498db,#2980b9);border:none;color:white;padding:8px 16px;border-radius:15px;cursor:pointer;font-weight:600;transition:all 0.3s ease}
+        .calendar-nav-btn:hover{transform:translateY(-2px);box-shadow:0 4px 10px rgba(52,152,219,0.3)}
+        .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+        .calendar-day-header{text-align:center;font-weight:700;color:#495057;padding:10px;font-size:0.9rem}
+        .calendar-day{aspect-ratio:1;background:#f8f9fa;border-radius:10px;padding:8px;text-align:center;font-weight:600;color:#495057;cursor:pointer;transition:all 0.2s ease;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center}
+        .calendar-day:hover{background:#e9ecef;transform:scale(1.05)}
+        .calendar-day.empty{background:transparent;cursor:default}
+        .calendar-day.empty:hover{transform:none}
+        .calendar-day.today{background:linear-gradient(135deg,#3498db,#2980b9);color:white;box-shadow:0 4px 10px rgba(52,152,219,0.3)}
+        .calendar-day.has-workout{background:linear-gradient(135deg,#27ae60,#2ecc71);color:white;box-shadow:0 4px 10px rgba(39,174,96,0.3)}
+        .calendar-day.has-workout:hover{transform:scale(1.08)}
+        .workout-dots{display:flex;gap:2px;margin-top:4px;flex-wrap:wrap;justify-content:center}
+        .workout-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.8)}
+        .workout-dot.bicipiti{background:#667eea}
+        .workout-dot.petto-tricipiti{background:#f093fb}
+        .workout-dot.spalle-gambe{background:#4facfe}
+        
+        .history-list{display:flex;flex-direction:column;gap:15px}
+        .history-item{background:rgba(255,255,255,0.95);border-radius:15px;padding:20px;box-shadow:0 5px 15px rgba(0,0,0,0.2);transition:transform 0.2s ease;color:#2c3e50}
+        .history-item:hover{transform:translateY(-3px)}
+        .history-date{font-size:1.2rem;font-weight:700;color:#2c3e50;margin-bottom:8px}
+        .history-workout-type{font-size:1rem;color:#495057;font-weight:600;margin-bottom:5px}
+        .history-time{font-size:0.9rem;color:#7f8c8d;font-style:italic}
+        .history-delete{background:linear-gradient(135deg,#e74c3c,#c0392b);border:none;color:white;padding:6px 12px;border-radius:15px;cursor:pointer;font-size:0.85rem;font-weight:600;margin-top:10px;transition:all 0.3s ease}
+        .history-delete:hover{transform:translateY(-2px);box-shadow:0 4px 10px rgba(231,76,60,0.3)}
+        .no-history{text-align:center;padding:40px;background:rgba(255,255,255,0.1);border-radius:15px;color:white;font-size:1.1rem}
+        .legend{display:flex;gap:20px;margin-top:15px;flex-wrap:wrap;justify-content:center}
+        .legend-item{display:flex;align-items:center;gap:8px;font-size:0.9rem}
+        .legend-dot{width:12px;height:12px;border-radius:50%}
         
         @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
-        .status-message{padding:15px 20px;border-radius:12px;margin:15px 0;font-weight:600;text-align:center;opacity:0;transition:opacity 0.3s ease}
-        .status-message.success{background:rgba(212,237,218,0.9);color:#155724;border:1px solid rgba(195,230,203,0.5)}
-        .status-message.error{background:rgba(248,215,218,0.9);color:#721c24;border:1px solid rgba(245,198,203,0.5)}
+        .status-message{padding:15px 20px;border-radius:12px;margin:15px 0;font-weight:600;text-align:center;opacity:0;transition:opacity 0.3s ease;position:fixed;top:20px;right:20px;z-index:1000;max-width:300px}
+        .status-message.success{background:rgba(212,237,218,0.95);color:#155724;border:1px solid rgba(195,230,203,0.5)}
+        .status-message.error{background:rgba(248,215,218,0.95);color:#721c24;border:1px solid rgba(245,198,203,0.5)}
         .status-message.show{opacity:1}
-        .loading-indicator{display:inline-block;margin-left:10px;font-size:0.9rem;opacity:0.7}
+        
         @media (max-width:768px){.container{padding:15px}.main-title{font-size:2.5rem}.workout-cards{grid-template-columns:1fr;gap:20px}.exercise-params{grid-template-columns:1fr}}
     </style>
 </head>
@@ -128,6 +171,11 @@
                         <div class="workout-icon">🦵</div>
                         <div class="workout-title">Spalle & Gambe</div>
                         <div class="workout-info"><span>⏱ 50-70 min</span><br><span>🏋️ 4 esercizi</span></div>
+                    </div>
+                    <div class="workout-card history" onclick="showPage('history')">
+                        <div class="workout-icon">📊</div>
+                        <div class="workout-title">Storico Allenamenti</div>
+                        <div class="workout-info">Visualizza le tue sessioni completate</div>
                     </div>
                 </div>
             </div>
@@ -177,11 +225,7 @@
                 </div>
                 <div class="series-progress">
                     <div class="series-label">Progresso Serie</div>
-                    <div class="progress-dots" id="progress-hammer-curl">
-                        <span class="progress-dot" onclick="toggleSeries('hammer-curl', 1)" title="Serie 1">○</span>
-                        <span class="progress-dot" onclick="toggleSeries('hammer-curl', 2)" title="Serie 2">○</span>
-                        <span class="progress-dot" onclick="toggleSeries('hammer-curl', 3)" title="Serie 3">○</span>
-                    </div>
+                    <div class="progress-dots" id="progress-hammer-curl"></div>
                 </div>
             </div>
             
@@ -241,6 +285,8 @@
                     <div class="progress-dots" id="progress-zottman-curl"></div>
                 </div>
             </div>
+            
+            <button class="complete-workout-btn" onclick="completeWorkout('bicipiti', 'Routine Bicipiti')">✓ Completa Allenamento</button>
         </div>
         
         <!-- PETTO-TRICIPITI PAGE -->
@@ -326,6 +372,8 @@
                     <div class="progress-dots" id="progress-overhead-extension"></div>
                 </div>
             </div>
+            
+            <button class="complete-workout-btn" onclick="completeWorkout('petto-tricipiti', 'Petto & Tricipiti')">✓ Completa Allenamento</button>
         </div>
         
         <!-- SPALLE-GAMBE PAGE -->
@@ -408,24 +456,64 @@
                 </div>
                 <div class="series-progress">
                     <div class="series-label">Progresso Serie</div>
-                    <div class="progress-dots" id="progress-lateral-raises">
-                        <span class="progress-dot" onclick="toggleSeries('lateral-raises', 1)" title="Serie 1">○</span>
-                        <span class="progress-dot" onclick="toggleSeries('lateral-raises', 2)" title="Serie 2">○</span>
-                        <span class="progress-dot" onclick="toggleSeries('lateral-raises', 3)" title="Serie 3">○</span>
+                    <div class="progress-dots" id="progress-lateral-raises"></div>
+                </div>
+            </div>
+            
+            <button class="complete-workout-btn" onclick="completeWorkout('spalle-gambe', 'Spalle & Gambe')">✓ Completa Allenamento</button>
+        </div>
+        
+        <!-- HISTORY PAGE -->
+        <div id="history-page" class="page">
+            <button class="back-button" onclick="showHomePage()">← Torna al Menu</button>
+            <div class="page-header">
+                <div class="page-title">📊 Storico Allenamenti</div>
+                <div class="page-subtitle">Le tue sessioni completate</div>
+            </div>
+            
+            <div class="history-container">
+                <!-- Calendario -->
+                <div class="calendar-section">
+                    <div class="calendar-header">
+                        <div class="calendar-month" id="calendar-month"></div>
+                        <div class="calendar-nav">
+                            <button class="calendar-nav-btn" onclick="changeMonth(-1)">← Prec</button>
+                            <button class="calendar-nav-btn" onclick="changeMonth(1)">Succ →</button>
+                        </div>
+                    </div>
+                    <div class="calendar-grid" id="calendar-grid"></div>
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-dot" style="background:linear-gradient(135deg,#667eea,#764ba2)"></div>
+                            <span>Bicipiti</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot" style="background:linear-gradient(135deg,#f093fb,#f5576c)"></div>
+                            <span>Petto & Tricipiti</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot" style="background:linear-gradient(135deg,#4facfe,#00f2fe)"></div>
+                            <span>Spalle & Gambe</span>
+                        </div>
                     </div>
                 </div>
+                
+                <!-- Lista sessioni -->
+                <div id="history-list" class="history-list"></div>
             </div>
         </div>
     </div>
 
     <script>
-        // Global variables
         let workoutData = {};
         let isLoadingData = false;
         let activeTimers = {};
-        let seriesProgress = {}; // Track completed series for each exercise
+        let seriesProgress = {};
+        let workoutHistory = [];
+        let currentCalendarDate = new Date();
+        let exerciseSuggestions = {}; // Traccia i suggerimenti per ogni esercizio
+        let dismissedSuggestions = {}; // Traccia i suggerimenti ignorati
         
-        // Initialize series progress tracking
         function initializeSeriesProgress() {
             const exercises = [
                 'barbell-curl', 'hammer-curl', 'incline-curl', 'concentrated-curl', 'zottman-curl',
@@ -435,15 +523,11 @@
             
             exercises.forEach(exercise => {
                 if (!seriesProgress[exercise]) {
-                    seriesProgress[exercise] = {
-                        completed: 0,
-                        total: 0
-                    };
+                    seriesProgress[exercise] = { completed: 0, total: 0 };
                 }
             });
         }
         
-        // Update series progress dots based on sets input
         function updateSeriesProgress(exerciseId) {
             const setsInput = document.querySelector(`[data-exercise="${exerciseId}"][data-param="sets"]`);
             const progressContainer = document.getElementById(`progress-${exerciseId}`);
@@ -452,28 +536,22 @@
             
             const totalSets = parseInt(setsInput.value) || 0;
             
-            // Update progress tracking
             if (!seriesProgress[exerciseId]) {
                 seriesProgress[exerciseId] = { completed: 0, total: totalSets };
             } else {
                 seriesProgress[exerciseId].total = totalSets;
-                // Reset completed if total sets decreased below completed
                 if (seriesProgress[exerciseId].completed > totalSets) {
                     seriesProgress[exerciseId].completed = totalSets;
                 }
             }
             
-            // Clear and rebuild dots
             progressContainer.innerHTML = '';
             
             for (let i = 0; i < totalSets; i++) {
                 const dot = document.createElement('div');
                 dot.className = 'progress-dot';
-                dot.setAttribute('data-series', i + 1);
                 dot.setAttribute('onclick', `toggleSeries('${exerciseId}', ${i + 1})`);
-                dot.setAttribute('title', `Serie ${i + 1}`);
                 
-                // Mark completed series
                 if (i < seriesProgress[exerciseId].completed) {
                     dot.classList.add('completed');
                 }
@@ -481,13 +559,11 @@
                 progressContainer.appendChild(dot);
             }
             
-            // Save progress to Firebase
             if (!isLoadingData) {
                 saveSeriesProgressToFirebase(exerciseId);
             }
         }
         
-        // Toggle series completion manually (click on dot)
         function toggleSeries(exerciseId, seriesNumber) {
             if (!seriesProgress[exerciseId]) return;
             
@@ -496,13 +572,11 @@
             const dot = dots[seriesNumber - 1];
             
             if (dot.classList.contains('completed')) {
-                // Uncomplete this series and all subsequent ones
                 for (let i = seriesNumber - 1; i < dots.length; i++) {
                     dots[i].classList.remove('completed');
                 }
                 seriesProgress[exerciseId].completed = seriesNumber - 1;
             } else {
-                // Complete this series and all previous ones
                 for (let i = 0; i < seriesNumber; i++) {
                     dots[i].classList.add('completed');
                 }
@@ -512,7 +586,6 @@
             saveSeriesProgressToFirebase(exerciseId);
         }
         
-        // Complete next series when timer starts
         function completeNextSeries(exerciseId) {
             if (!seriesProgress[exerciseId]) return;
             
@@ -528,29 +601,19 @@
                     dots[completed].classList.add('completed');
                 }
                 
-                // Check if all series are completed
-                if (seriesProgress[exerciseId].completed === total) {
-                    showStatus(`🎉 Esercizio ${exerciseId} completato! Tutte le serie finite!`, 'success');
-                } else {
-                    showStatus(`✅ Serie ${seriesProgress[exerciseId].completed}/${total} completata per ${exerciseId}`, 'success');
-                }
-                
                 saveSeriesProgressToFirebase(exerciseId);
             }
         }
         
-        // Save series progress to Firebase
         async function saveSeriesProgressToFirebase(exerciseId) {
             try {
                 const dbRef = window.firebaseRef(window.firebaseDB, `seriesProgress/${exerciseId}`);
                 await window.firebaseSet(dbRef, seriesProgress[exerciseId]);
-                console.log(`Series progress saved for ${exerciseId}:`, seriesProgress[exerciseId]);
             } catch (error) {
                 console.error('Error saving series progress:', error);
             }
         }
         
-        // Load series progress from Firebase
         async function loadSeriesProgressFromFirebase() {
             try {
                 const dbRef = window.firebaseRef(window.firebaseDB, 'seriesProgress');
@@ -558,9 +621,6 @@
                 
                 if (snapshot.exists()) {
                     seriesProgress = snapshot.val();
-                    console.log('Series progress loaded from Firebase:', seriesProgress);
-                    
-                    // Update all progress dots
                     Object.keys(seriesProgress).forEach(exerciseId => {
                         updateSeriesProgress(exerciseId);
                     });
@@ -570,35 +630,12 @@
             }
         }
         
-        // Reset all series progress for a workout
-        function resetWorkoutProgress(workoutType) {
-            const exercises = {
-                'bicipiti': ['barbell-curl', 'hammer-curl', 'incline-curl', 'concentrated-curl', 'zottman-curl'],
-                'petto-tricipiti': ['bench-press', 'flyes', 'french-press', 'overhead-extension'],
-                'spalle-gambe': ['barbell-squat', 'military-press', 'walking-lunges', 'lateral-raises']
-            };
-            
-            if (exercises[workoutType]) {
-                exercises[workoutType].forEach(exerciseId => {
-                    if (seriesProgress[exerciseId]) {
-                        seriesProgress[exerciseId].completed = 0;
-                        updateSeriesProgress(exerciseId);
-                        saveSeriesProgressToFirebase(exerciseId);
-                    }
-                });
-                showStatus(`🔄 Reset progresso per ${workoutType}`, 'success');
-            }
-        }
-        
-        // Timer functionality
         function startTimer(exerciseId, defaultTime) {
-            // Stop any existing timer for this exercise
             if (activeTimers[exerciseId]) {
                 clearInterval(activeTimers[exerciseId].interval);
                 delete activeTimers[exerciseId];
             }
             
-            // Get the current rest time from the input field
             const restInput = document.querySelector(`[data-exercise="${exerciseId}"][data-param="rest"]`);
             const restTime = parseInt(restInput?.value) || defaultTime;
             
@@ -607,7 +644,6 @@
             
             if (!timerDisplay || !timerButton) return;
             
-            // Complete next series immediately when timer starts
             completeNextSeries(exerciseId);
             
             let timeLeft = restTime;
@@ -616,17 +652,14 @@
             timerButton.setAttribute('onclick', `stopTimer('${exerciseId}', ${defaultTime})`);
             timerDisplay.classList.add('active');
             
-            // Update display immediately
             updateTimerDisplay(timerDisplay, timeLeft);
             
-            // Start countdown
             activeTimers[exerciseId] = {
                 interval: setInterval(() => {
                     timeLeft--;
                     updateTimerDisplay(timerDisplay, timeLeft);
                     
                     if (timeLeft <= 0) {
-                        // Timer finished
                         clearInterval(activeTimers[exerciseId].interval);
                         delete activeTimers[exerciseId];
                         
@@ -636,10 +669,8 @@
                         timerButton.classList.remove('running');
                         timerButton.setAttribute('onclick', `startTimer('${exerciseId}', ${defaultTime})`);
                         
-                        // Show notification
                         showStatus('⏰ Timer terminato!', 'success');
                         
-                        // Reset display after 3 seconds
                         setTimeout(() => {
                             timerDisplay.textContent = '';
                             timerDisplay.classList.remove('active');
@@ -675,126 +706,462 @@
             display.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
         }
         
-        // Navigation functions
+        async function completeWorkout(workoutType, workoutName) {
+            const now = new Date();
+            const session = {
+                workoutType: workoutType,
+                workoutName: workoutName,
+                date: now.toLocaleDateString('it-IT'),
+                time: now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }),
+                timestamp: now.getTime()
+            };
+            
+            try {
+                const dbRef = window.firebaseRef(window.firebaseDB, 'workoutHistory');
+                await window.firebasePush(dbRef, session);
+                
+                // Azzera il progresso delle serie per gli esercizi di questo workout
+                await resetWorkoutProgress(workoutType);
+                
+                showStatus('🎉 Allenamento completato e salvato!', 'success');
+                
+                setTimeout(() => {
+                    showHomePage();
+                }, 1500);
+            } catch (error) {
+                console.error('Error saving workout session:', error);
+                showStatus('❌ Errore nel salvare la sessione', 'error');
+            }
+        }
+        
+        async function resetWorkoutProgress(workoutType) {
+            // Definisce quali esercizi appartengono a ogni workout
+            const workoutExercises = {
+                'bicipiti': ['barbell-curl', 'hammer-curl', 'incline-curl', 'concentrated-curl', 'zottman-curl'],
+                'petto-tricipiti': ['bench-press', 'flyes', 'french-press', 'overhead-extension'],
+                'spalle-gambe': ['barbell-squat', 'military-press', 'walking-lunges', 'lateral-raises']
+            };
+            
+            const exercises = workoutExercises[workoutType];
+            
+            if (!exercises) return;
+            
+            // Azzera il progresso per ogni esercizio del workout
+            for (const exerciseId of exercises) {
+                if (seriesProgress[exerciseId]) {
+                    seriesProgress[exerciseId].completed = 0;
+                    
+                    // Aggiorna visivamente i pallini
+                    updateSeriesProgress(exerciseId);
+                    
+                    // Salva su Firebase
+                    await saveSeriesProgressToFirebase(exerciseId);
+                }
+            }
+            
+            console.log(`Progresso azzerato per ${workoutType}`);
+        }
+        
+        async function loadWorkoutHistory() {
+            try {
+                const dbRef = window.firebaseRef(window.firebaseDB, 'workoutHistory');
+                const snapshot = await window.firebaseGet(dbRef);
+                
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    workoutHistory = Object.keys(data).map(key => ({
+                        id: key,
+                        ...data[key]
+                    })).sort((a, b) => b.timestamp - a.timestamp);
+                } else {
+                    workoutHistory = [];
+                }
+                
+                renderCalendar();
+                renderWorkoutHistory();
+            } catch (error) {
+                console.error('Error loading workout history:', error);
+            }
+        }
+        
+        function changeMonth(direction) {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + direction);
+            renderCalendar();
+        }
+        
+        function renderCalendar() {
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth();
+            
+            const monthNames = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
+                               'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
+            document.getElementById('calendar-month').textContent = `${monthNames[month]} ${year}`;
+            
+            let firstDay = new Date(year, month, 1).getDay();
+            firstDay = firstDay === 0 ? 6 : firstDay - 1;
+            
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const today = new Date();
+            
+            const grid = document.getElementById('calendar-grid');
+            grid.innerHTML = '';
+            
+            const dayHeaders = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
+            dayHeaders.forEach(day => {
+                const header = document.createElement('div');
+                header.className = 'calendar-day-header';
+                header.textContent = day;
+                grid.appendChild(header);
+            });
+            
+            for (let i = 0; i < firstDay; i++) {
+                const emptyDay = document.createElement('div');
+                emptyDay.className = 'calendar-day empty';
+                grid.appendChild(emptyDay);
+            }
+            
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day';
+                
+                const dayNumber = document.createElement('div');
+                dayNumber.textContent = day;
+                dayElement.appendChild(dayNumber);
+                
+                if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+                    dayElement.classList.add('today');
+                }
+                
+                const dayWorkouts = workoutHistory.filter(session => {
+                    const sessionParts = session.date.split('/');
+                    const sessionDay = parseInt(sessionParts[0]);
+                    const sessionMonth = parseInt(sessionParts[1]);
+                    const sessionYear = parseInt(sessionParts[2]);
+                    
+                    return sessionDay === day && sessionMonth === (month + 1) && sessionYear === year;
+                });
+                
+                if (dayWorkouts.length > 0) {
+                    dayElement.classList.add('has-workout');
+                    
+                    const dotsContainer = document.createElement('div');
+                    dotsContainer.className = 'workout-dots';
+                    
+                    dayWorkouts.forEach(workout => {
+                        const dot = document.createElement('div');
+                        dot.className = `workout-dot ${workout.workoutType}`;
+                        dot.title = workout.workoutName;
+                        dotsContainer.appendChild(dot);
+                    });
+                    
+                    dayElement.appendChild(dotsContainer);
+                }
+                
+                dayElement.onclick = () => filterWorkoutsByDate(day, month + 1, year);
+                
+                grid.appendChild(dayElement);
+            }
+        }
+        
+        function filterWorkoutsByDate(day, month, year) {
+            const filteredWorkouts = workoutHistory.filter(session => {
+                const sessionParts = session.date.split('/');
+                const sessionDay = parseInt(sessionParts[0]);
+                const sessionMonth = parseInt(sessionParts[1]);
+                const sessionYear = parseInt(sessionParts[2]);
+                
+                return sessionDay === day && sessionMonth === month && sessionYear === year;
+            });
+            
+            if (filteredWorkouts.length === 0) {
+                showStatus('Nessun allenamento in questa data', 'error');
+                renderWorkoutHistory(); // Mostra tutti gli allenamenti
+                return;
+            }
+            
+            renderWorkoutHistory(filteredWorkouts);
+            showStatus(`Mostrando allenamenti del ${day}/${month}/${year}`, 'success');
+        }
+        
+        function renderWorkoutHistory(filteredList = null) {
+            const container = document.getElementById('history-list');
+            const listToShow = filteredList || workoutHistory;
+            
+            if (listToShow.length === 0) {
+                container.innerHTML = '<div class="no-history">Nessun allenamento completato ancora. Inizia una sessione!</div>';
+                return;
+            }
+            
+            container.innerHTML = listToShow.map(session => `
+                <div class="history-item">
+                    <div class="history-date">📅 ${session.date}</div>
+                    <div class="history-workout-type">💪 ${session.workoutName}</div>
+                    <div class="history-time">⏰ Ore ${session.time}</div>
+                    <button class="history-delete" onclick="deleteWorkoutSession('${session.id}')">🗑️ Elimina</button>
+                </div>
+            `).join('');
+        }
+        
+        async function deleteWorkoutSession(sessionId) {
+            if (!confirm('Sei sicuro di voler eliminare questa sessione?')) return;
+            
+            try {
+                const dbRef = window.firebaseRef(window.firebaseDB, `workoutHistory/${sessionId}`);
+                await window.firebaseSet(dbRef, null);
+                
+                showStatus('✅ Sessione eliminata', 'success');
+                await loadWorkoutHistory();
+            } catch (error) {
+                console.error('Error deleting session:', error);
+                showStatus('❌ Errore nell\'eliminazione', 'error');
+            }
+        }
+        
         function showPage(pageId) {
-            // Hide all pages
             document.querySelectorAll('.page').forEach(page => {
                 page.classList.remove('active');
             });
             
-            // Show selected page
             const targetPage = document.getElementById(pageId + '-page');
             if (targetPage) {
                 targetPage.classList.add('active');
             }
+            
+            if (pageId === 'history') {
+                loadWorkoutHistory();
+            } else if (pageId === 'bicipiti' || pageId === 'petto-tricipiti' || pageId === 'spalle-gambe') {
+                // Analizza e mostra suggerimenti quando si apre una pagina di workout
+                analyzeAndShowSuggestions(pageId);
+            }
+        }
+        
+        async function analyzeAndShowSuggestions(workoutType) {
+            // Definisce quali esercizi appartengono a ogni workout
+            const workoutExercises = {
+                'bicipiti': ['barbell-curl', 'hammer-curl', 'incline-curl', 'concentrated-curl', 'zottman-curl'],
+                'petto-tricipiti': ['bench-press', 'flyes', 'french-press', 'overhead-extension'],
+                'spalle-gambe': ['barbell-squat', 'military-press', 'walking-lunges', 'lateral-raises']
+            };
+            
+            const exercises = workoutExercises[workoutType];
+            if (!exercises) return;
+            
+            // Analizza ogni esercizio
+            for (const exerciseId of exercises) {
+                const suggestion = await generateAISuggestion(exerciseId, workoutType);
+                if (suggestion) {
+                    displaySuggestion(exerciseId, suggestion);
+                }
+            }
+        }
+        
+        async function generateAISuggestion(exerciseId, workoutType) {
+            // Se il suggerimento è stato ignorato, non mostrarlo di nuovo
+            if (dismissedSuggestions[exerciseId]) return null;
+            
+            // Ottieni dati attuali dell'esercizio
+            const currentData = workoutData[exerciseId];
+            if (!currentData) return null;
+            
+            const currentWeight = parseFloat(currentData.weight) || 0;
+            const currentSets = parseInt(currentData.sets) || 0;
+            const currentReps = currentData.reps || '';
+            
+            // Conta quante volte è stato completato questo workout (sempre, non solo ultimo mese)
+            const recentWorkouts = workoutHistory.filter(session => {
+                return session.workoutType === workoutType;
+            });
+            
+            const completedCount = recentWorkouts.length;
+            
+            // Regole per suggerire incremento di peso - ora basta 1 sessione completata
+            if (completedCount >= 1 && currentWeight > 0) {
+                // Esercizi composti vs isolati
+                const isCompound = ['barbell-curl', 'bench-press', 'barbell-squat', 'military-press'].includes(exerciseId);
+                const incrementPercentage = isCompound ? 0.05 : 0.10; // 5% per composti, 10% per isolati
+                const suggestedWeight = Math.round((currentWeight * (1 + incrementPercentage)) * 2) / 2; // Arrotonda a 0.5kg
+                
+                return {
+                    type: 'weight-increase',
+                    currentWeight: currentWeight,
+                    suggestedWeight: suggestedWeight,
+                    reason: `Hai completato ${completedCount} sessioni di ${workoutType}. Prova ad aumentare il carico progressivamente!`,
+                    increment: suggestedWeight - currentWeight
+                };
+            }
+            
+            // Regola per aumentare le serie
+            if (completedCount >= 1 && currentSets < 5 && currentWeight > 0) {
+                const avgReps = parseAverageReps(currentReps);
+                if (avgReps && avgReps >= 12) {
+                    return {
+                        type: 'sets-increase',
+                        currentSets: currentSets,
+                        suggestedSets: currentSets + 1,
+                        reason: `Con ${avgReps} ripetizioni medie, potresti beneficiare di una serie extra per maggiore volume.`
+                    };
+                }
+            }
+            
+            return null;
+        }
+        
+        function parseAverageReps(repsStr) {
+            // Parse "10-12" o "10" per ottenere la media
+            if (!repsStr) return null;
+            const match = repsStr.match(/(\d+)(?:-(\d+))?/);
+            if (!match) return null;
+            const min = parseInt(match[1]);
+            const max = match[2] ? parseInt(match[2]) : min;
+            return (min + max) / 2;
+        }
+        
+        function displaySuggestion(exerciseId, suggestion) {
+            const weightGroup = document.querySelector(`[data-exercise="${exerciseId}"][data-param="weight"]`)?.closest('.param-group');
+            const setsGroup = document.querySelector(`[data-exercise="${exerciseId}"][data-param="sets"]`)?.closest('.param-group');
+            
+            let targetGroup = null;
+            let suggestionHTML = '';
+            
+            if (suggestion.type === 'weight-increase' && weightGroup) {
+                targetGroup = weightGroup;
+                suggestionHTML = `
+                    <div class="ai-suggestion" id="suggestion-${exerciseId}">
+                        <span class="ai-suggestion-icon">🤖</span>
+                        <div>
+                            <div>Suggerimento: ${suggestion.suggestedWeight}kg (+${suggestion.increment}kg)</div>
+                            <div style="font-size:0.75rem;opacity:0.9;margin-top:2px">${suggestion.reason}</div>
+                        </div>
+                    </div>
+                    <div class="suggestion-actions">
+                        <button class="suggestion-btn suggestion-accept" onclick="applySuggestion('${exerciseId}', 'weight', ${suggestion.suggestedWeight})">✓ Applica</button>
+                        <button class="suggestion-btn suggestion-dismiss" onclick="dismissSuggestion('${exerciseId}')">✗ Ignora</button>
+                    </div>
+                `;
+            } else if (suggestion.type === 'sets-increase' && setsGroup) {
+                targetGroup = setsGroup;
+                suggestionHTML = `
+                    <div class="ai-suggestion" id="suggestion-${exerciseId}">
+                        <span class="ai-suggestion-icon">🤖</span>
+                        <div>
+                            <div>Suggerimento: ${suggestion.suggestedSets} serie</div>
+                            <div style="font-size:0.75rem;opacity:0.9;margin-top:2px">${suggestion.reason}</div>
+                        </div>
+                    </div>
+                    <div class="suggestion-actions">
+                        <button class="suggestion-btn suggestion-accept" onclick="applySuggestion('${exerciseId}', 'sets', ${suggestion.suggestedSets})">✓ Applica</button>
+                        <button class="suggestion-btn suggestion-dismiss" onclick="dismissSuggestion('${exerciseId}')">✗ Ignora</button>
+                    </div>
+                `;
+            }
+            
+            if (targetGroup && suggestionHTML) {
+                // Rimuovi suggerimenti esistenti
+                const existingSuggestion = targetGroup.querySelector('.ai-suggestion');
+                if (existingSuggestion) {
+                    existingSuggestion.parentElement.removeChild(existingSuggestion);
+                }
+                
+                targetGroup.classList.add('has-suggestion');
+                targetGroup.insertAdjacentHTML('beforeend', suggestionHTML);
+                exerciseSuggestions[exerciseId] = suggestion;
+            }
+        }
+        
+        async function applySuggestion(exerciseId, param, value) {
+            // Applica il suggerimento
+            const input = document.querySelector(`[data-exercise="${exerciseId}"][data-param="${param}"]`);
+            if (input) {
+                input.value = value;
+                
+                // Salva su Firebase
+                await saveExerciseToFirebase(exerciseId, param, value);
+                
+                // Aggiorna progress se necessario
+                if (param === 'sets') {
+                    updateSeriesProgress(exerciseId);
+                }
+                
+                showStatus(`✅ Suggerimento applicato: ${param} = ${value}`, 'success');
+            }
+            
+            // Rimuovi il suggerimento
+            removeSuggestionUI(exerciseId);
+            delete exerciseSuggestions[exerciseId];
+        }
+        
+        function dismissSuggestion(exerciseId) {
+            dismissedSuggestions[exerciseId] = true;
+            removeSuggestionUI(exerciseId);
+            delete exerciseSuggestions[exerciseId];
+            showStatus('Suggerimento ignorato', 'success');
+        }
+        
+        function removeSuggestionUI(exerciseId) {
+            const suggestion = document.getElementById(`suggestion-${exerciseId}`);
+            if (suggestion) {
+                const paramGroup = suggestion.closest('.param-group');
+                if (paramGroup) {
+                    paramGroup.classList.remove('has-suggestion');
+                    const actions = paramGroup.querySelector('.suggestion-actions');
+                    if (actions) actions.remove();
+                }
+                suggestion.remove();
+            }
         }
         
         function showHomePage() {
-            // Hide all pages
             document.querySelectorAll('.page').forEach(page => {
                 page.classList.remove('active');
             });
             
-            // Show home page
             document.getElementById('home-page').classList.add('active');
             
-            // Stop all active timers when returning to home
             Object.keys(activeTimers).forEach(exerciseId => {
                 clearInterval(activeTimers[exerciseId].interval);
             });
             activeTimers = {};
         }
         
-        // Initialize the workout app - Enhanced with debug info
         window.initWorkoutApp = async function() {
-            console.log('🚀 INIZIALIZZAZIONE APP...');
-            console.log('📱 Device info:', {
-                userAgent: navigator.userAgent,
-                screenWidth: screen.width,
-                viewportWidth: window.innerWidth,
-                isMobile: window.innerWidth <= 768
-            });
-            
-            // Verifica se Firebase è caricato correttamente
-            console.log('🔍 Verifica Firebase:', {
-                firebaseDB: !!window.firebaseDB,
-                firebaseRef: !!window.firebaseRef,
-                firebaseGet: !!window.firebaseGet,
-                firebaseSet: !!window.firebaseSet,
-                firebaseOnValue: !!window.firebaseOnValue
-            });
+            console.log('Inizializzazione app...');
             
             if (!window.firebaseDB || !window.firebaseRef || !window.firebaseGet || !window.firebaseSet) {
-                console.error('❌ FIREBASE NON CARICATO CORRETTAMENTE!');
+                console.error('Firebase non caricato correttamente!');
                 showStatus('❌ Errore: Firebase non caricato', 'error');
                 return;
             }
             
             showStatus('📡 Caricamento dati da Firebase...', 'success');
             
-            // Initialize series progress
             initializeSeriesProgress();
             
-            // Load data
             await loadAllDataFromFirebase();
             await loadSeriesProgressFromFirebase();
             
-            // Initialize progress dots for all exercises with debug
             const exercises = [
                 'barbell-curl', 'hammer-curl', 'incline-curl', 'concentrated-curl', 'zottman-curl',
                 'bench-press', 'flyes', 'french-press', 'overhead-extension',
                 'barbell-squat', 'military-press', 'walking-lunges', 'lateral-raises'
             ];
             
-            console.log('🔄 Inizializzazione pallini per', exercises.length, 'esercizi...');
-            
-            exercises.forEach((exerciseId, index) => {
-                console.log(`Inizializzando pallini per esercizio ${index + 1}/${exercises.length}: ${exerciseId}`);
+            exercises.forEach(exerciseId => {
                 updateSeriesProgress(exerciseId);
-                
-                // Verify dots were created
-                const container = document.getElementById(`progress-${exerciseId}`);
-                const dots = container ? container.querySelectorAll('.progress-dot') : [];
-                console.log(`Esercizio ${exerciseId}: ${dots.length} pallini creati`);
             });
-            
-            // Final verification
-            setTimeout(() => {
-                console.log('🔍 Verifica finale pallini:');
-                exercises.forEach(exerciseId => {
-                    const container = document.getElementById(`progress-${exerciseId}`);
-                    const dots = container ? container.querySelectorAll('.progress-dot') : [];
-                    const setsInput = document.querySelector(`[data-exercise="${exerciseId}"][data-param="sets"]`);
-                    const expectedDots = setsInput ? parseInt(setsInput.value) : 0;
-                    
-                    if (dots.length !== expectedDots) {
-                        console.warn(`⚠️ Problema con ${exerciseId}: attesi ${expectedDots} pallini, trovati ${dots.length}`);
-                        // Try to fix
-                        updateSeriesProgress(exerciseId);
-                    } else {
-                        console.log(`✅ ${exerciseId}: ${dots.length} pallini OK`);
-                    }
-                });
-            }, 1000);
         };
         
-        // Load all workout data from Firebase
         async function loadAllDataFromFirebase() {
             try {
                 isLoadingData = true;
-                showStatus('📡 Connessione a Firebase...', 'success');
                 
-                // Read from Firebase
                 const dbRef = window.firebaseRef(window.firebaseDB, 'workouts');
                 const snapshot = await window.firebaseGet(dbRef);
                 
                 if (snapshot.exists()) {
                     workoutData = snapshot.val();
-                    console.log('✅ DATI CARICATI DA FIREBASE:', workoutData);
+                    updateAllInputFields();
                     showStatus('✅ Dati caricati da Firebase!', 'success');
                 } else {
-                    console.log('⚠️ Nessun dato trovato su Firebase, inizializzo con valori predefiniti');
-                    // Initialize with default data if no data exists
                     workoutData = {
                         'barbell-curl': { sets: '4', reps: '10-12', weight: '23', rest: '60' },
                         'hammer-curl': { sets: '3', reps: '11', weight: '12', rest: '60' },
@@ -811,114 +1178,44 @@
                         'lateral-raises': { sets: '3', reps: '12-15', weight: '6', rest: '45' }
                     };
                     await saveAllDataToFirebase();
-                    showStatus('🔧 Dati iniziali salvati su Firebase', 'success');
                 }
                 
-                // Update all input fields with loaded data
                 updateAllInputFields();
                 
             } catch (error) {
-                console.error('❌ ERRORE CONNESSIONE FIREBASE:', error);
-                showStatus('❌ Errore connessione Firebase: ' + error.message, 'error');
-                
-                // Log configurazione Firebase per debug
-                console.error('Configurazione Firebase:', {
-                    database: window.firebaseDB,
-                    ref: window.firebaseRef,
-                    get: window.firebaseGet,
-                    set: window.firebaseSet
-                });
+                console.error('Errore connessione Firebase:', error);
+                showStatus('❌ Errore connessione Firebase', 'error');
             } finally {
                 isLoadingData = false;
             }
         }
         
-        // Save all data to Firebase
         async function saveAllDataToFirebase() {
             try {
                 const dbRef = window.firebaseRef(window.firebaseDB, 'workouts');
                 await window.firebaseSet(dbRef, workoutData);
-                console.log('Tutti i dati salvati su Firebase');
             } catch (error) {
-                console.error('Errore nel salvataggio su Firebase:', error);
-                showStatus('Errore nel salvataggio su Firebase', 'error');
+                console.error('Errore nel salvataggio:', error);
             }
         }
         
-        // Save specific exercise data to Firebase
         async function saveExerciseToFirebase(exercise, param, value) {
             try {
-                console.log(`🚀 TENTATIVO SALVATAGGIO: ${exercise}.${param} = ${value}`);
-                
                 if (!workoutData[exercise]) {
                     workoutData[exercise] = {};
                 }
                 
                 workoutData[exercise][param] = value;
-                workoutData[exercise].updated = new Date().toLocaleString('it-IT');
-                
-                console.log('🔧 Stato Firebase prima del salvataggio:', {
-                    database: !!window.firebaseDB,
-                    ref: !!window.firebaseRef,
-                    set: !!window.firebaseSet,
-                    
-                });
                 
                 const dbRef = window.firebaseRef(window.firebaseDB, `workouts/${exercise}`);
-                console.log('🔍 Path Firebase:', `workouts/${exercise}`);
-                console.log('📦 Dati da salvare:', workoutData[exercise]);
-                
                 await window.firebaseSet(dbRef, workoutData[exercise]);
                 
-                console.log(`✅ SALVATO SU FIREBASE: ${exercise}.${param} = ${value}`);
-                console.log('📊 Dati completi salvati:', workoutData[exercise]);
-                
-                // Mostra messaggio di conferma specifico per ogni parametro
-                if (param === 'sets') {
-                    showStatus(`✅ Serie salvate su Firebase: ${exercise} = ${value} serie`, 'success');
-                } else if (param === 'weight') {
-                    showStatus(`✅ Peso salvato su Firebase: ${exercise} = ${value}kg`, 'success');
-                } else if (param === 'reps') {
-                    showStatus(`✅ Ripetizioni salvate su Firebase: ${exercise} = ${value}`, 'success');
-                } else if (param === 'rest') {
-                    showStatus(`✅ Riposo salvato su Firebase: ${exercise} = ${value}s`, 'success');
-                } else {
-                    showStatus(`✅ ${param} salvato su Firebase`, 'success');
-                }
-                
             } catch (error) {
-                console.error('❌ ERRORE FIREBASE COMPLETO:', error);
-                console.error('❌ Tipo errore:', error.name);
-                console.error('❌ Messaggio:', error.message);
-                console.error('❌ Codice errore:', error.code);
-                console.error('❌ Stack:', error.stack);
-                
-                // Verifica stato Firebase
-                console.error('🔍 Debug Firebase:', {
-                    hasDatabase: !!window.firebaseDB,
-                    hasRef: !!window.firebaseRef,
-                    hasSet: !!window.firebaseSet,
-                    exercise,
-                    param,
-                    value,
-                    dataToSave: workoutData[exercise]
-                });
-                
-                // Messaggio di errore più specifico
-                let errorMsg = 'Errore Firebase';
-                if (error.code === 'PERMISSION_DENIED') {
-                    errorMsg = 'Errore: Permessi Firebase negati';
-                } else if (error.code === 'NETWORK_ERROR') {
-                    errorMsg = 'Errore: Connessione di rete';
-                } else if (error.message) {
-                    errorMsg = `Errore: ${error.message}`;
-                }
-                
-                showStatus(`❌ ${errorMsg}`, 'error');
+                console.error('Errore Firebase:', error);
+                showStatus('❌ Errore salvataggio', 'error');
             }
         }
         
-        // Update all input fields with current data
         function updateAllInputFields() {
             Object.keys(workoutData).forEach(exercise => {
                 const data = workoutData[exercise];
@@ -940,14 +1237,12 @@
             setTimeout(() => statusEl.classList.remove('show'), 3000);
         }
         
-        // Auto-save functionality
         document.addEventListener('input', async (e) => {
             if (e.target.classList.contains('param-input') && !isLoadingData) {
                 const exercise = e.target.dataset.exercise;
                 const param = e.target.dataset.param;
                 const value = e.target.value;
                 
-                // Visual feedback
                 e.target.classList.add('saving');
                 
                 try {
@@ -958,7 +1253,6 @@
                     
                     setTimeout(() => e.target.classList.remove('saved'), 1000);
                     
-                    // If sets changed, update progress dots
                     if (param === 'sets') {
                         updateSeriesProgress(exercise);
                     }
